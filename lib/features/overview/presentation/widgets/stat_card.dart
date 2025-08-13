@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
   final IconData icon;
@@ -53,7 +52,7 @@ class StatCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: AppTheme.textSecondary,
+                    // color: AppTheme.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -62,7 +61,7 @@ class StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: AppTheme.textPrimary,
+                    // color: AppTheme.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),

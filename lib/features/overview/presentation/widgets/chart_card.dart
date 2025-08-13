@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
-import '../models/dashboard_models.dart';
+import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
+
+import '../../../../models/dashboard_models.dart';
 
 class ChartCard extends StatelessWidget {
   final String title;
@@ -46,7 +47,7 @@ class ChartCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  // color: AppColors.,
                 ),
               ),
               if (timeFilters.isNotEmpty)
@@ -62,16 +63,18 @@ class ChartCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppTheme.primaryGreen : Colors.transparent,
+                          color: isSelected
+                              ? AppColors.primaryLaurel
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? AppTheme.primaryGreen : AppTheme.borderColor,
+                            // color: isSelected ? AppColors.primaryLaurel : AppTheme.borderColor,
                           ),
                         ),
                         child: Text(
                           filter,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : AppTheme.textSecondary,
+                            // color: isSelected ? Colors.white : AppTheme.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -83,10 +86,7 @@ class ChartCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            height: 200,
-            child: _buildChart(),
-          ),
+          SizedBox(height: 200, child: _buildChart()),
         ],
       ),
     );
@@ -105,9 +105,9 @@ class ChartCard extends StatelessWidget {
 
   Widget _buildLineChart() {
     if (data.isEmpty) return const SizedBox();
-    
+
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
-    
+
     return CustomPaint(
       size: const Size(double.infinity, 200),
       painter: LineChartPainter(data: data, maxValue: maxValue),
@@ -116,9 +116,9 @@ class ChartCard extends StatelessWidget {
 
   Widget _buildBarChart() {
     if (data.isEmpty) return const SizedBox();
-    
+
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -131,7 +131,7 @@ class ChartCard extends StatelessWidget {
               width: 24,
               height: height,
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen,
+                // color: AppColors.primaryLaurel,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -140,7 +140,7 @@ class ChartCard extends StatelessWidget {
               item.label,
               style: const TextStyle(
                 fontSize: 12,
-                color: AppTheme.textSecondary,
+                // color: AppTheme.textSecondary,
               ),
             ),
           ],
@@ -151,9 +151,9 @@ class ChartCard extends StatelessWidget {
 
   Widget _buildAreaChart() {
     if (data.isEmpty) return const SizedBox();
-    
+
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
-    
+
     return CustomPaint(
       size: const Size(double.infinity, 200),
       painter: AreaChartPainter(data: data, maxValue: maxValue),
@@ -177,25 +177,21 @@ class LineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    
+
     for (int i = 0; i < data.length; i++) {
       final x = (i / (data.length - 1)) * size.width;
       final y = size.height - (data[i].value / maxValue) * size.height;
-      
+
       if (i == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
-      
+
       // Draw points
-      canvas.drawCircle(
-        Offset(x, y),
-        4,
-        Paint()..color = Colors.orange,
-      );
+      canvas.drawCircle(Offset(x, y), 4, Paint()..color = Colors.orange);
     }
-    
+
     canvas.drawPath(path, paint);
   }
 
@@ -212,37 +208,37 @@ class AreaChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.primaryGreen.withOpacity(0.3)
+      // ..color = AppColors.primaryLaurel.withOpacity(0.3)
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint()
-      ..color = AppTheme.primaryGreen
+      // ..color = AppColors.primaryLaurel
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final path = Path();
     final strokePath = Path();
-    
+
     // Start from bottom left
     path.moveTo(0, size.height);
-    
+
     for (int i = 0; i < data.length; i++) {
       final x = (i / (data.length - 1)) * size.width;
       final y = size.height - (data[i].value / maxValue) * size.height;
-      
+
       path.lineTo(x, y);
-      
+
       if (i == 0) {
         strokePath.moveTo(x, y);
       } else {
         strokePath.lineTo(x, y);
       }
     }
-    
+
     // Close the path to bottom right
     path.lineTo(size.width, size.height);
     path.close();
-    
+
     canvas.drawPath(path, paint);
     canvas.drawPath(strokePath, strokePaint);
   }

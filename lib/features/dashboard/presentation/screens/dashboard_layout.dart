@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_web_willbefore/core/routes/route_endpoint.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../models/dashboard_models.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/dashboard_header.dart';
-import '../models/dashboard_models.dart';
 
 class DashboardLayout extends StatelessWidget {
   final Widget child;
@@ -13,7 +14,7 @@ class DashboardLayout extends StatelessWidget {
   });
 
   NavigationItem _getCurrentNavigationItem(String location) {
-    if (location.startsWith('/dashboard')) return NavigationItem.dashboard;
+    if (location.startsWith(RouteEndpoint.dashboard)) return NavigationItem.dashboard;
     if (location.startsWith('/categories')) return NavigationItem.categories;
     if (location.startsWith('/products')) return NavigationItem.productList;
     if (location.startsWith('/orders')) return NavigationItem.order;
@@ -24,7 +25,7 @@ class DashboardLayout extends StatelessWidget {
   }
 
   String _getPageTitle(String location) {
-    if (location.startsWith('/dashboard')) return 'Overview';
+    if (location.startsWith(RouteEndpoint.dashboard)) return 'Overview';
     if (location.startsWith('/categories')) return 'Categories';
     if (location.startsWith('/products/add')) return 'Add Product';
     if (location.startsWith('/products/edit')) return 'Edit Product';
@@ -38,7 +39,7 @@ class DashboardLayout extends StatelessWidget {
   }
 
   List<String> _getBreadcrumbs(String location) {
-    if (location.startsWith('/dashboard')) return ['Dashboard', 'Overview'];
+    if (location.startsWith(RouteEndpoint.dashboard)) return ['Dashboard', 'Overview'];
     if (location.startsWith('/categories')) return ['Dashboard', 'Categories'];
     if (location.startsWith('/products/add')) return ['Dashboard', 'Product List', 'Add Product'];
     if (location.startsWith('/products/edit')) return ['Dashboard', 'Product List', 'Edit Product'];
@@ -54,7 +55,7 @@ class DashboardLayout extends StatelessWidget {
   void _onNavigationItemSelected(BuildContext context, NavigationItem item) {
     switch (item) {
       case NavigationItem.dashboard:
-        context.go('/dashboard');
+        context.go(RouteEndpoint.dashboard);
         break;
       case NavigationItem.categories:
         context.go('/categories');

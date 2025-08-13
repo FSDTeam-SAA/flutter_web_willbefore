@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
+import '../../../../data/dummy_data.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/chart_card.dart';
-import '../data/dummy_data.dart';
-import '../theme/app_theme.dart';
 
 class OverviewScreen extends StatefulWidget {
   const OverviewScreen({super.key});
@@ -19,7 +19,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
   @override
   Widget build(BuildContext context) {
     final stats = DummyData.dashboardStats;
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -32,7 +32,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   icon: Icons.attach_money,
                   title: 'Total Revenue',
                   value: '\$${stats.totalRevenue.toStringAsFixed(0)}',
-                  iconColor: AppTheme.primaryGreen,
+                  iconColor: AppColors.primaryLaurel,
                 ),
               ),
               const SizedBox(width: 24),
@@ -41,7 +41,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   icon: Icons.inventory,
                   title: 'Total Live Product',
                   value: '${stats.totalLiveProducts}',
-                  iconColor: AppTheme.primaryGreen,
+                  iconColor: AppColors.primaryLaurel,
                 ),
               ),
               const SizedBox(width: 24),
@@ -50,14 +50,14 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   icon: Icons.people,
                   title: 'Total User',
                   value: '${stats.totalUsers}',
-                  iconColor: AppTheme.primaryGreen,
+                  iconColor: AppColors.primaryLaurel,
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Charts Row
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,9 +91,9 @@ class _OverviewScreenState extends State<OverviewScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Revenue Chart
           ChartCard(
             title: 'Revenue report',

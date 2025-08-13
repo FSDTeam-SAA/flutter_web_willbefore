@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/dashboard_models.dart';
-import '../theme/app_theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_willbefore/core/common/widgets/app_logo.dart';
+import 'package:flutter_web_willbefore/core/routes/route_endpoint.dart';
+import 'package:go_router/go_router.dart';
 
-class Sidebar extends StatelessWidget {
+import '../../../../models/dashboard_models.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+
+class Sidebar extends ConsumerWidget {
   final NavigationItem selectedItem;
   final Function(NavigationItem) onItemSelected;
 
@@ -13,46 +18,14 @@ class Sidebar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: 250,
       color: Colors.white,
       child: Column(
         children: [
           // Logo Section
-          Container(
-            padding: const EdgeInsets.all(24),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryGreen,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.sentiment_satisfied,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'SmileTreats',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const Text(
-                  '™',
-                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                ),
-              ],
-            ),
-          ),
+          Container(padding: const EdgeInsets.all(24), child: AppLogo()),
 
           // Navigation Items
           Expanded(
@@ -110,9 +83,7 @@ class Sidebar extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              onTap: () {
-                // Handle logout
-              },
+              onTap: () => _handleLogout(context, ref),
             ),
           ),
         ],
@@ -132,20 +103,57 @@ class Sidebar extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           icon,
-          color: isSelected ? AppTheme.primaryGreen : AppTheme.textSecondary,
+          // color: isSelected ? AppColors.primaryLaurel : AppTheme.textSecondary,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? AppTheme.primaryGreen : AppTheme.textPrimary,
+            // color: isSelected ? AppColors.primaryLaurel : AppTheme.textPrimary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
         selected: isSelected,
-        selectedTileColor: AppTheme.primaryGreen,
+        // selectedTileColor: AppColors.primaryLaurel,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         onTap: () => onItemSelected(item),
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    final logoutConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Log Out'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (logoutConfirmed == true && context.mounted) {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+      try {
+        await ref.read(authProvider.notifier).logout();
+        // Navigate to login screen after logout
+        if (context.mounted) {
+          context.pushReplacement(RouteEndpoint.login);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('Logout failed: ${e.toString()}')),
+          );
+        }
+      }
+    }
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class DashboardHeader extends StatelessWidget {
   final String title;
@@ -16,9 +15,9 @@ class DashboardHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
-        color: AppTheme.backgroundColor,
+        // color: AppTheme.backgroundColor,
         border: Border(
-          bottom: BorderSide(color: AppTheme.borderColor),
+          // bottom: BorderSide(color: AppTheme.borderColor),
         ),
       ),
       child: Row(
@@ -32,7 +31,7 @@ class DashboardHeader extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    // color: AppTheme.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -41,14 +40,16 @@ class DashboardHeader extends StatelessWidget {
                     final index = entry.key;
                     final breadcrumb = entry.value;
                     final isLast = index == breadcrumbs.length - 1;
-                    
+
                     return Row(
                       children: [
                         Text(
                           breadcrumb,
                           style: TextStyle(
-                            color: isLast ? AppTheme.textPrimary : AppTheme.textSecondary,
-                            fontWeight: isLast ? FontWeight.w500 : FontWeight.normal,
+                            // color: isLast ? AppTheme.textPrimary : AppTheme.textSecondary,
+                            fontWeight: isLast
+                                ? FontWeight.w500
+                                : FontWeight.normal,
                           ),
                         ),
                         if (!isLast) ...[
@@ -56,7 +57,7 @@ class DashboardHeader extends StatelessWidget {
                           const Icon(
                             Icons.chevron_right,
                             size: 16,
-                            color: AppTheme.textSecondary,
+                            // color: AppTheme.textSecondary,
                           ),
                           const SizedBox(width: 8),
                         ],
@@ -74,13 +75,13 @@ class DashboardHeader extends StatelessWidget {
                 'Mr. Raja',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.textPrimary,
+                  // color: AppTheme.textPrimary,
                 ),
               ),
               const SizedBox(width: 12),
               CircleAvatar(
                 radius: 20,
-                backgroundColor: AppTheme.primaryGreen,
+                // backgroundColor: AppColors.primaryLaurel,
                 child: const Text(
                   'MR',
                   style: TextStyle(
