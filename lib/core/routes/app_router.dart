@@ -18,7 +18,6 @@ class AuthGuardState {
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-
     initialLocation: RouteEndpoint.dashboard,
 
     redirect: (context, state) {
@@ -63,47 +62,52 @@ class AppRouter {
             builder: (context, state) => const OverviewScreen(),
           ),
           GoRoute(
-            path: '/categories',
+            path: RouteEndpoint.categories,
             name: 'categories',
             builder: (context, state) => const CategoriesScreen(),
           ),
-          // GoRoute(
-          //   path: '/products',
-          //   name: 'products',
-          //   builder: (context, state) => const ProductListScreen(),
-          //   routes: [
-          //     GoRoute(
-          //       path: '/add',
-          //       name: 'add-product',
-          //       builder: (context, state) => const AddProductScreen(),
-          //     ),
-          //     GoRoute(
-          //       path: '/edit/:id',
-          //       name: 'edit-product',
-          //       builder: (context, state) {
-          //         final productId = state.pathParameters['id']!;
-          //         return EditProductScreen(productId: productId);
-          //       },
-          //     ),
-          //   ],
-          // ),
+          GoRoute(
+            path: RouteEndpoint.products,
+            name: 'products',
+            builder: (context, state) => const ProductListScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                name: 'add-product',
+                builder: (context, state) => const AddProductScreen(),
+              ),
+              GoRoute(
+                path: 'edit/:id',
+                name: 'edit-product',
+                builder: (context, state) {
+                  final productId = state.pathParameters['id']!;
+                  return EditProductScreen(productId: productId);
+                },
+              ),
+            ],
+          ),
           // GoRoute(
           //   path: '/orders',
           //   name: 'orders',
           //   builder: (context, state) => const OrderScreen(),
           // ),
-          // GoRoute(
-          //   path: '/promos',
-          //   name: 'promos',
-          //   builder: (context, state) => const PromoScreen(),
-          //   routes: [
-          //     GoRoute(
-          //       path: '/add',
-          //       name: 'add-promo',
-          //       builder: (context, state) => const AddPromoScreen(),
-          //     ),
-          //   ],
-          // ),
+          GoRoute(
+            path: RouteEndpoint.promos,
+            name: 'promos',
+            builder: (context, state) => const PromosScreen(),
+            routes: [
+              GoRoute(
+                path: 'add',
+                name: 'add-promo',
+                builder: (context, state) => const AddPromoScreen(),
+              ),
+              // GoRoute(
+              //   path: 'view',
+              //   name: 'add-promo',
+              //   builder: (context, state) => const AddPromoScreen(),
+              // ),
+            ],
+          ),
           // GoRoute(
           //   path: '/profile',
           //   name: 'profile',

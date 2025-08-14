@@ -1,3 +1,4 @@
+import '../features/product/domain/entrity/product.dart';
 import '../models/dashboard_models.dart';
 
 class DummyData {
@@ -64,12 +65,14 @@ class DummyData {
       actualPrice: 25.99,
       discountPrice: 19.99,
       stock: 50,
-      category: 'Cakes',
       description: 'Delicious premium chocolate cake with rich cocoa flavor',
-      images: ['cake1.jpg', 'cake2.jpg'],
       sizes: ['Small', 'Medium', 'Large'],
       colors: ['Brown', 'Dark Brown'],
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      categoryId: '',
+      colorCodes: [],
+      imageUrls: [],
+      updatedAt: DateTime.now(),
     ),
     Product(
       id: '2',
@@ -77,12 +80,14 @@ class DummyData {
       actualPrice: 15.99,
       discountPrice: 12.99,
       stock: 30,
-      category: 'Cupcakes',
       description: 'Fresh vanilla cupcakes with buttercream frosting',
-      images: ['cupcake1.jpg'],
       sizes: ['Regular'],
       colors: ['White', 'Pink'],
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      categoryId: '',
+      colorCodes: [],
+      imageUrls: [],
+      updatedAt: DateTime.now(),
     ),
     Product(
       id: '3',
@@ -90,12 +95,14 @@ class DummyData {
       actualPrice: 32.99,
       discountPrice: 28.99,
       stock: 20,
-      category: 'Cheesecakes',
       description: 'Creamy strawberry cheesecake with fresh strawberries',
-      images: ['cheesecake1.jpg', 'cheesecake2.jpg', 'cheesecake3.jpg'],
       sizes: ['Medium', 'Large'],
       colors: ['Pink', 'Red'],
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      categoryId: '',
+      colorCodes: [],
+      imageUrls: [],
+      updatedAt: DateTime.now(),
     ),
   ];
 

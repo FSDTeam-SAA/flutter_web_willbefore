@@ -1,0 +1,596 @@
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/routes/route_endpoint.dart';
+import '../../domain/requests/create_promo_request.dart';
+import '../providers/promos_provider.dart';
+
+class AddPromoScreen extends ConsumerStatefulWidget {
+  const AddPromoScreen({super.key});
+
+  @override
+  ConsumerState<AddPromoScreen> createState() => _AddPromoScreenState();
+}
+
+class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _discountPercentageController = TextEditingController();
+  final _discountAmountController = TextEditingController();
+  final _minimumOrderController = TextEditingController();
+  final _usageLimitController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _endDateController = TextEditingController();
+
+  DateTime? _startDate;
+  DateTime? _endDate;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
+  bool _isActive = true;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _codeController.dispose();
+    _descriptionController.dispose();
+    _discountPercentageController.dispose();
+    _discountAmountController.dispose();
+    _minimumOrderController.dispose();
+    _usageLimitController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+          _startDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+        } else {
+          _endDate = picked;
+          _endDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+        }
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        setState(() {
+          _selectedImageBytes = file.bytes;
+          _selectedImageName = file.name;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final request = CreatePromoRequest(
+      title: _titleController.text.trim(),
+      code: _codeController.text.trim().toUpperCase(),
+      description: _descriptionController.text.trim(),
+      discountPercentage: double.tryParse(_discountPercentageController.text) ?? 0,
+      discountAmount: _discountAmountController.text.isNotEmpty
+          ? double.tryParse(_discountAmountController.text)
+          : null,
+      minimumOrderAmount: _minimumOrderController.text.isNotEmpty
+          ? double.tryParse(_minimumOrderController.text)
+          : null,
+      startDate: _startDate!,
+      endDate: _endDate!,
+      imageBytes: _selectedImageBytes,
+      imageName: _selectedImageName,
+      isActive: _isActive,
+      usageLimit: int.tryParse(_usageLimitController.text) ?? 0,
+    );
+
+    final success = await ref.read(promosProvider.notifier).createPromo(request);
+
+    if (success && mounted) {
+      context.go(RouteEndpoint.promos);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Promo created successfully!'),
+          backgroundColor: AppColors.primaryLaurel,
+        ),
+      );
+    } else if (mounted) {
+      final errorMessage = ref.read(promosProvider).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final promosState = ref.watch(promosProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPromoTitleSection(),
+                  const SizedBox(height: 24),
+                  _buildPromoCodeSection(),
+                  const SizedBox(height: 24),
+                  _buildDescriptionSection(),
+                  const SizedBox(height: 24),
+                  _buildDiscountSection(),
+                  const SizedBox(height: 24),
+                  _buildDateSection(),
+                  const SizedBox(height: 24),
+                  _buildSettingsSection(),
+                  const SizedBox(height: 32),
+                  _buildActionButtons(promosState.isCreating),
+                ],
+              ),
+            ),
+
+            const SizedBox(width: 32),
+
+            // Right Column
+            Expanded(
+              child: _buildImageSection(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPromoTitleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Add promo title',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _titleController,
+          decoration: const InputDecoration(
+            hintText: 'Enter promo title...',
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a promo title';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPromoCodeSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Add Code',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _codeController,
+          decoration: const InputDecoration(
+            hintText: 'Enter promo code...',
+          ),
+          onChanged: (value) {
+            _codeController.value = _codeController.value.copyWith(
+              text: value.toUpperCase(),
+              selection: TextSelection.collapsed(offset: value.length),
+            );
+          },
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a promo code';
+            }
+            if (value.length < 3) {
+              return 'Promo code must be at least 3 characters';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDescriptionSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Description',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _descriptionController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Enter promo description...',
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a description';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDiscountSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Discount Settings',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _discountPercentageController,
+                decoration: const InputDecoration(
+                  labelText: 'Discount Percentage (%)',
+                  hintText: '0',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Required';
+                  }
+                  final percentage = double.tryParse(value);
+                  if (percentage == null || percentage < 0 || percentage > 100) {
+                    return 'Enter valid percentage (0-100)';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _discountAmountController,
+                decoration: const InputDecoration(
+                  labelText: 'Fixed Discount Amount',
+                  hintText: '0.00',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _minimumOrderController,
+          decoration: const InputDecoration(
+            labelText: 'Minimum Order Amount',
+            hintText: '0.00',
+          ),
+          keyboardType: TextInputType.number,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Start Date',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textAppBlack,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _startDateController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter start date...',
+                  suffixIcon: IconButton(
+                    onPressed: () => _selectDate(context, true),
+                    icon: const Icon(Icons.calendar_today),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select start date';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'End Date',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textAppBlack,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _endDateController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter end date...',
+                  suffixIcon: IconButton(
+                    onPressed: () => _selectDate(context, false),
+                    icon: const Icon(Icons.calendar_today),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select end date';
+                  }
+                  if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+                    return 'End date must be after start date';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _usageLimitController,
+          decoration: const InputDecoration(
+            labelText: 'Usage Limit (0 for unlimited)',
+            hintText: '0',
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Checkbox(
+              value: _isActive,
+              onChanged: (value) => setState(() => _isActive = value ?? true),
+              activeColor: AppColors.primaryLaurel,
+            ),
+            const Text(
+              'Active',
+              style: TextStyle(
+                color: AppColors.textAppBlack,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Add Promo Image',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            height: 300,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: AppColors.borderColor,
+                style: BorderStyle.solid,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _selectedImageBytes != null
+                ? Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          _selectedImageBytes!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedImageBytes = null;
+                              _selectedImageName = null;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate_outlined,
+                          size: 64,
+                          color: AppColors.textSecondaryHintColor,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Click to upload promo image',
+                          style: TextStyle(
+                            color: AppColors.textSecondaryHintColor,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(bool isLoading) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: isLoading ? null : () => context.go(RouteEndpoint.promos),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: const BorderSide(color: AppColors.borderColor),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondaryColor),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: isLoading ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLaurel,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}

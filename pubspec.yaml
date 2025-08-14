@@ -57,12 +57,17 @@ dependencies:
   # Utilities
   flutx_core: ^1.1.0+1
   intl: ^0.20.2
+  flutter_colorpicker: ^1.1.0
 
   # Web # remover
   url_strategy: ^0.3.0
 
   # cache manage
   cached_network_image: ^3.4.1
+
+  # Rich Text Editor (Web Compatible)
+  html_editor_enhanced: ^2.7.1
+
 
 dev_dependencies:
   flutter_test:

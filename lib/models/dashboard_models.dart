@@ -17,33 +17,33 @@ class ChartData {
   ChartData({required this.label, required this.value});
 }
 
-class Product {
-  final String id;
-  final String title;
-  final double actualPrice;
-  final double discountPrice;
-  final int stock;
-  final String category;
-  final String description;
-  final List<String> images;
-  final List<String> sizes;
-  final List<String> colors;
-  final DateTime createdAt;
+// class Product {
+//   final String id;
+//   final String title;
+//   final double actualPrice;
+//   final double discountPrice;
+//   final int stock;
+//   final String category;
+//   final String description;
+//   final List<String> images;
+//   final List<String> sizes;
+//   final List<String> colors;
+//   final DateTime createdAt;
 
-  Product({
-    required this.id,
-    required this.title,
-    required this.actualPrice,
-    required this.discountPrice,
-    required this.stock,
-    required this.category,
-    required this.description,
-    required this.images,
-    required this.sizes,
-    required this.colors,
-    required this.createdAt,
-  });
-}
+//   Product({
+//     required this.id,
+//     required this.title,
+//     required this.actualPrice,
+//     required this.discountPrice,
+//     required this.stock,
+//     required this.category,
+//     required this.description,
+//     required this.images,
+//     required this.sizes,
+//     required this.colors,
+//     required this.createdAt,
+//   });
+// }
 
 class Promo {
   final String id;
