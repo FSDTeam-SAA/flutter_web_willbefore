@@ -38,7 +38,6 @@ dependencies:
   # UI
   google_fonts: ^6.3.0
   flutter_svg: ^2.2.0
-  flutx_core: ^1.1.0+1
 
   # Routing
   go_router: ^16.1.0
@@ -49,7 +48,21 @@ dependencies:
   # Firebase
   firebase_core: ^4.0.0
   firebase_auth: ^6.0.1
+  firebase_storage: ^13.0.0
+  cloud_firestore: ^6.0.0
+
+  # File Handling
+  file_picker: ^10.3.1
+
+  # Utilities
+  flutx_core: ^1.1.0+1
+  intl: ^0.20.2
+
+  # Web # remover
   url_strategy: ^0.3.0
+
+  # cache manage
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

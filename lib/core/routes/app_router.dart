@@ -62,11 +62,11 @@ class AppRouter {
             name: 'dashboard',
             builder: (context, state) => const OverviewScreen(),
           ),
-          // GoRoute(
-          //   path: '/categories',
-          //   name: 'categories',
-          //   builder: (context, state) => const CategoriesScreen(),
-          // ),
+          GoRoute(
+            path: '/categories',
+            name: 'categories',
+            builder: (context, state) => const CategoriesScreen(),
+          ),
           // GoRoute(
           //   path: '/products',
           //   name: 'products',
