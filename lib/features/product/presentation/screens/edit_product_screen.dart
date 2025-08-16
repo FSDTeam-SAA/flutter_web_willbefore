@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -19,10 +19,7 @@ import '../providers/products_providers.dart';
 class EditProductScreen extends ConsumerStatefulWidget {
   final String productId;
 
-  const EditProductScreen({
-    super.key,
-    required this.productId,
-  });
+  const EditProductScreen({super.key, required this.productId});
 
   @override
   ConsumerState<EditProductScreen> createState() => _EditProductScreenState();
@@ -30,7 +27,7 @@ class EditProductScreen extends ConsumerStatefulWidget {
 
 class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Text Controllers
   late final TextEditingController _titleController;
   late final TextEditingController _actualPriceController;
@@ -49,7 +46,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize controllers
     _titleController = TextEditingController();
     _actualPriceController = TextEditingController();
@@ -59,7 +56,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     _colorNameController = TextEditingController();
     _overOrderDiscountController = TextEditingController();
     _freeReturnDaysController = TextEditingController();
-    
+
     // Initialize HTML Editor Controller
     _htmlController = HtmlEditorController();
 
@@ -70,79 +67,182 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   void _loadProductData() async {
-    final productsState = ref.read(productsProvider);
-    final product = productsState.products.firstWhere(
-      (p) => p == widget.productId,
-      orElse: () => throw Exception('Product not found'),
-    );
+    try {
+      final productsState = ref.read(productsProvider);
+      final product = productsState.products.firstWhere(
+        (p) => p.id == widget.productId,
+        orElse: () => throw Exception('Product not found'),
+      );
 
-    // Initialize form with product data
-    ref.read(editProductFormProvider(widget.productId).notifier).initializeFromProduct(product);
+      // Initialize form with product data
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .initializeFromProduct(product);
 
-    // Set HTML content
-    _htmlController.setText(product.description);
+      DPrint.log("Description - ${product.description}");
 
-    // Set up listeners after initialization
-    _setupControllerListeners();
-    
-    setState(() {
-      _isInitialized = true;
-    });
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Set HTML content with the actual product description
+      if (product.description.isNotEmpty) {
+        _htmlController.setText(product.description);
+      }
+
+      // Initialize controllers with current values
+      final formData = ref.read(editProductFormProvider(widget.productId));
+      _titleController.text = formData.title;
+      _actualPriceController.text = formData.actualPrice;
+      _discountPriceController.text = formData.discountPrice;
+      _stockController.text = formData.stock;
+      _sizeController.text = formData.customSize;
+      _colorNameController.text = formData.customColorName;
+      _overOrderDiscountController.text = formData.overOrderDiscount;
+      _freeReturnDaysController.text = formData.freeReturnDays;
+
+      _titleController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateTitle(_titleController.text);
+      });
+
+      _actualPriceController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateActualPrice(_actualPriceController.text);
+      });
+
+      _discountPriceController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateDiscountPrice(_discountPriceController.text);
+      });
+
+      _stockController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateStock(_stockController.text);
+      });
+
+      _sizeController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateCustomSize(_sizeController.text);
+      });
+
+      _colorNameController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateCustomColorName(_colorNameController.text);
+      });
+
+      _overOrderDiscountController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateOverOrderDiscount(_overOrderDiscountController.text);
+      });
+
+      _freeReturnDaysController.addListener(() {
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .updateFreeReturnDays(_freeReturnDaysController.text);
+      });
+
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      if (mounted) {
+        DPrint.log("Error loading product data: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _setupControllerListeners() {
     // Listen to form state changes and update controllers
-    ref.listen<EditProductFormData>(editProductFormProvider(widget.productId), (previous, next) {
-      if (previous?.title != next.title && _titleController.text != next.title) {
+    ref.listen<EditProductFormData>(editProductFormProvider(widget.productId), (
+      previous,
+      next,
+    ) {
+      if (previous?.title != next.title &&
+          _titleController.text != next.title) {
         _titleController.text = next.title;
       }
-      if (previous?.actualPrice != next.actualPrice && _actualPriceController.text != next.actualPrice) {
+      if (previous?.actualPrice != next.actualPrice &&
+          _actualPriceController.text != next.actualPrice) {
         _actualPriceController.text = next.actualPrice;
       }
-      if (previous?.discountPrice != next.discountPrice && _discountPriceController.text != next.discountPrice) {
+      if (previous?.discountPrice != next.discountPrice &&
+          _discountPriceController.text != next.discountPrice) {
         _discountPriceController.text = next.discountPrice;
       }
-      if (previous?.stock != next.stock && _stockController.text != next.stock) {
+      if (previous?.stock != next.stock &&
+          _stockController.text != next.stock) {
         _stockController.text = next.stock;
       }
-      if (previous?.customSize != next.customSize && _sizeController.text != next.customSize) {
+      if (previous?.customSize != next.customSize &&
+          _sizeController.text != next.customSize) {
         _sizeController.text = next.customSize;
       }
-      if (previous?.customColorName != next.customColorName && _colorNameController.text != next.customColorName) {
+      if (previous?.customColorName != next.customColorName &&
+          _colorNameController.text != next.customColorName) {
         _colorNameController.text = next.customColorName;
       }
-      if (previous?.overOrderDiscount != next.overOrderDiscount && _overOrderDiscountController.text != next.overOrderDiscount) {
+      if (previous?.overOrderDiscount != next.overOrderDiscount &&
+          _overOrderDiscountController.text != next.overOrderDiscount) {
         _overOrderDiscountController.text = next.overOrderDiscount;
       }
-      if (previous?.freeReturnDays != next.freeReturnDays && _freeReturnDaysController.text != next.freeReturnDays) {
+      if (previous?.freeReturnDays != next.freeReturnDays &&
+          _freeReturnDaysController.text != next.freeReturnDays) {
         _freeReturnDaysController.text = next.freeReturnDays;
       }
     });
 
     // Add listeners to controllers
     _titleController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateTitle(_titleController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateTitle(_titleController.text);
     });
     _actualPriceController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateActualPrice(_actualPriceController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateActualPrice(_actualPriceController.text);
     });
     _discountPriceController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateDiscountPrice(_discountPriceController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateDiscountPrice(_discountPriceController.text);
     });
     _stockController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateStock(_stockController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateStock(_stockController.text);
     });
     _sizeController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateCustomSize(_sizeController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateCustomSize(_sizeController.text);
     });
     _colorNameController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateCustomColorName(_colorNameController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateCustomColorName(_colorNameController.text);
     });
     _overOrderDiscountController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateOverOrderDiscount(_overOrderDiscountController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateOverOrderDiscount(_overOrderDiscountController.text);
     });
     _freeReturnDaysController.addListener(() {
-      ref.read(editProductFormProvider(widget.productId).notifier).updateFreeReturnDays(_freeReturnDaysController.text);
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .updateFreeReturnDays(_freeReturnDaysController.text);
     });
   }
 
@@ -161,12 +261,15 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   Future<void> _pickImages() async {
     final formData = ref.read(editProductFormProvider(widget.productId));
-    final totalImages = formData.selectedImages.length + formData.existingImageUrls.length;
-    
+    final totalImages =
+        formData.selectedImages.length + formData.existingImageUrls.length;
+
     if (totalImages >= EditProductFormNotifier.maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Maximum ${EditProductFormNotifier.maxImages} images allowed'),
+          content: Text(
+            'Maximum ${EditProductFormNotifier.maxImages} images allowed',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -183,14 +286,15 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       if (result != null && result.files.isNotEmpty) {
         final newImages = <ProductImage>[];
         for (var file in result.files) {
-          if (file.bytes != null && 
-              (totalImages + newImages.length) < EditProductFormNotifier.maxImages) {
-            newImages.add(
-              ProductImage(bytes: file.bytes!, name: file.name),
-            );
+          if (file.bytes != null &&
+              (totalImages + newImages.length) <
+                  EditProductFormNotifier.maxImages) {
+            newImages.add(ProductImage(bytes: file.bytes!, name: file.name));
           }
         }
-        ref.read(editProductFormProvider(widget.productId).notifier).addImages(newImages);
+        ref
+            .read(editProductFormProvider(widget.productId).notifier)
+            .addImages(newImages);
       }
     } catch (e) {
       if (mounted) {
@@ -205,12 +309,16 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   void _addCustomSize() {
-    ref.read(editProductFormProvider(widget.productId).notifier).addCustomSize();
+    ref
+        .read(editProductFormProvider(widget.productId).notifier)
+        .addCustomSize();
   }
+
+final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
 
   Future<void> _addCustomColor() async {
     final formData = ref.read(editProductFormProvider(widget.productId));
-    
+
     if (formData.customColorName.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -233,7 +341,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: selectedColor,
-            onColorChanged: (color) => selectedColor = color,
+            onColorChanged: (color) {
+                ref.read(selectedColorProvider.notifier).state = color;
+              },
             pickerAreaHeightPercent: 0.8,
           ),
         ),
@@ -244,10 +354,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              ref.read(editProductFormProvider(widget.productId).notifier).addCustomColor(
-                formData.customColorName.trim(),
-                selectedColor,
-              );
+              ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .addCustomColor(
+                    formData.customColorName.trim(),
+                    selectedColor,
+                  );
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
@@ -267,7 +379,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final formData = ref.read(editProductFormProvider(widget.productId));
-    final totalImages = formData.selectedImages.length + formData.existingImageUrls.length;
+    final totalImages =
+        formData.selectedImages.length + formData.existingImageUrls.length;
 
     if (totalImages == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -284,7 +397,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
     final facilities = <String, dynamic>{};
     if (formData.overOrderDiscount.isNotEmpty) {
-      facilities['overOrderDiscount'] = double.tryParse(formData.overOrderDiscount);
+      facilities['overOrderDiscount'] = double.tryParse(
+        formData.overOrderDiscount,
+      );
     }
     if (formData.freeReturnDays.isNotEmpty) {
       facilities['freeReturnDays'] = int.tryParse(formData.freeReturnDays);
@@ -341,9 +456,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     if (!_isInitialized) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primaryLaurel,
-          ),
+          child: CircularProgressIndicator(color: AppColors.primaryLaurel),
         ),
       );
     }
@@ -354,21 +467,21 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     final formData = ref.watch(editProductFormProvider(widget.productId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Edit Product',
-          style: GoogleFonts.notoSansKr(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textAppBlack,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textAppBlack),
-          onPressed: () => context.go(RouteEndpoint.products),
-        ),
-      ),
+      // appBar: AppBar(
+      //   title: Text(
+      //     'Edit Product',
+      //     style: GoogleFonts.notoSansKr(
+      //       fontWeight: FontWeight.w600,
+      //       color: AppColors.textAppBlack,
+      //     ),
+      //   ),
+      //   backgroundColor: Colors.white,
+      //   elevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back, color: AppColors.textAppBlack),
+      //     onPressed: () => context.go(RouteEndpoint.products),
+      //   ),
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -496,7 +609,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             children: [
               _buildPriceField('Actual_Price', _actualPriceController, true),
               const SizedBox(height: 16),
-              _buildPriceField('Discount_Price', _discountPriceController, false),
+              _buildPriceField(
+                'Discount_Price',
+                _discountPriceController,
+                false,
+              ),
               const SizedBox(height: 16),
               _buildPriceField('Stocks', _stockController, true),
             ],
@@ -506,11 +623,19 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         return Row(
           children: [
             Expanded(
-              child: _buildPriceField('Actual_Price', _actualPriceController, true),
+              child: _buildPriceField(
+                'Actual_Price',
+                _actualPriceController,
+                true,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildPriceField('Discount_Price', _discountPriceController, false),
+              child: _buildPriceField(
+                'Discount_Price',
+                _discountPriceController,
+                false,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(child: _buildPriceField('Stocks', _stockController, true)),
@@ -541,7 +666,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           controller: controller,
           style: GoogleFonts.notoSansKr(),
           decoration: InputDecoration(
-            hintText: 'Edit product ${label.toLowerCase().replaceAll('_', ' ')}...',
+            hintText:
+                'Edit product ${label.toLowerCase().replaceAll('_', ' ')}...',
             hintStyle: GoogleFonts.notoSansKr(
               color: AppColors.textSecondaryHintColor,
             ),
@@ -612,7 +738,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     );
   }
 
-  Widget _buildCategoryDropdown(CategoriesState categoriesState, EditProductFormData formData) {
+  Widget _buildCategoryDropdown(
+    CategoriesState categoriesState,
+    EditProductFormData formData,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -693,14 +822,18 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 vertical: 12,
               ),
             ),
-            items: categoriesState.categories.map<DropdownMenuItem<String>>((category) {
+            items: categoriesState.categories.map<DropdownMenuItem<String>>((
+              category,
+            ) {
               return DropdownMenuItem<String>(
                 value: category.id,
                 child: Text(category.name, style: GoogleFonts.notoSansKr()),
               );
             }).toList(),
             onChanged: (value) {
-              ref.read(editProductFormProvider(widget.productId).notifier).updateSelectedCategory(value);
+              ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .updateSelectedCategory(value);
             },
             validator: (value) {
               if (value == null) {
@@ -713,7 +846,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     );
   }
 
-  Widget _buildPromoDropdown(PromosState promosState, EditProductFormData formData) {
+  Widget _buildPromoDropdown(
+    PromosState promosState,
+    EditProductFormData formData,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -749,27 +885,27 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             value: formData.selectedPromoId,
             style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
             decoration: InputDecoration(
-              hintText: promosState.activePromos.isEmpty 
+              hintText: promosState.activePromos.isEmpty
                   ? 'No active promos available'
                   : 'Select a promo',
               hintStyle: GoogleFonts.notoSansKr(
-                color: promosState.activePromos.isEmpty 
-                    ? Colors.orange 
+                color: promosState.activePromos.isEmpty
+                    ? Colors.orange
                     : AppColors.textSecondaryHintColor,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty 
-                      ? Colors.orange 
+                  color: promosState.activePromos.isEmpty
+                      ? Colors.orange
                       : AppColors.borderColor,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty 
-                      ? Colors.orange 
+                  color: promosState.activePromos.isEmpty
+                      ? Colors.orange
                       : AppColors.borderColor,
                 ),
               ),
@@ -790,7 +926,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 value: null,
                 child: Text('No promo', style: GoogleFonts.notoSansKr()),
               ),
-              ...promosState.activePromos.map<DropdownMenuItem<String>>((promo) {
+              ...promosState.activePromos.map<DropdownMenuItem<String>>((
+                promo,
+              ) {
                 return DropdownMenuItem<String>(
                   value: promo.id,
                   child: Text(
@@ -801,7 +939,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               }).toList(),
             ],
             onChanged: (value) {
-              ref.read(editProductFormProvider(widget.productId).notifier).updateSelectedPromo(value);
+              ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .updateSelectedPromo(value);
             },
           ),
       ],
@@ -829,9 +969,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           ),
           child: HtmlEditor(
             controller: _htmlController,
-            htmlEditorOptions: const HtmlEditorOptions(
+            htmlEditorOptions: HtmlEditorOptions(
               hint: "Edit product description here...",
               shouldEnsureVisible: true,
+              inputType: HtmlInputType.text,
               initialText: "",
               autoAdjustHeight: false,
             ),
@@ -840,10 +981,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               toolbarType: ToolbarType.nativeScrollable,
               defaultToolbarButtons: [
                 StyleButtons(style: false),
-                FontSettingButtons(
-                  fontName: false,
-                  fontSizeUnit: false,
-                ),
+                FontSettingButtons(fontName: false, fontSizeUnit: false),
                 FontButtons(
                   bold: true,
                   italic: true,
@@ -853,15 +991,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   superscript: false,
                   subscript: false,
                 ),
-                ColorButtons(
-                  foregroundColor: true,
-                  highlightColor: true,
-                ),
-                ListButtons(
-                  ul: true,
-                  ol: true,
-                  listStyles: false,
-                ),
+                ColorButtons(foregroundColor: true, highlightColor: true),
+                ListButtons(ul: true, ol: true, listStyles: false),
                 ParagraphButtons(
                   textDirection: false,
                   lineHeight: false,
@@ -968,7 +1099,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   Widget _buildImageSection() {
     final formData = ref.watch(editProductFormProvider(widget.productId));
-    final totalImages = formData.selectedImages.length + formData.existingImageUrls.length;
+    final totalImages =
+        formData.selectedImages.length + formData.existingImageUrls.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1066,11 +1198,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           itemCount: 5,
           itemBuilder: (context, index) {
             final imageIndex = index + 1; // Skip first image (main)
-            
+
             // Check existing images first, then new images
             Widget? imageWidget;
             VoidCallback? removeCallback;
-            
+
             if (imageIndex < formData.existingImageUrls.length) {
               // Show existing image
               imageWidget = Image.network(
@@ -1080,13 +1212,20 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
-                    child: Icon(Icons.broken_image, size: 24, color: Colors.grey),
+                    child: Icon(
+                      Icons.broken_image,
+                      size: 24,
+                      color: Colors.grey,
+                    ),
                   );
                 },
               );
-              removeCallback = () => ref.read(editProductFormProvider(widget.productId).notifier).removeExistingImage(imageIndex);
+              removeCallback = () => ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .removeExistingImage(imageIndex);
             } else {
-              final newImageIndex = imageIndex - formData.existingImageUrls.length;
+              final newImageIndex =
+                  imageIndex - formData.existingImageUrls.length;
               if (newImageIndex < formData.selectedImages.length) {
                 // Show new image
                 imageWidget = Image.memory(
@@ -1095,7 +1234,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   height: double.infinity,
                   fit: BoxFit.cover,
                 );
-                removeCallback = () => ref.read(editProductFormProvider(widget.productId).notifier).removeImage(newImageIndex);
+                removeCallback = () => ref
+                    .read(editProductFormProvider(widget.productId).notifier)
+                    .removeImage(newImageIndex);
               }
             }
 
@@ -1173,7 +1314,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Custom Size Input
         Row(
           children: [
@@ -1229,9 +1370,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Default Sizes
         Text(
           'Default Sizes',
@@ -1248,29 +1389,29 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           children: EditProductFormNotifier.defaultSizes.map((size) {
             final isSelected = formData.selectedSizes.contains(size);
             return GestureDetector(
-              onTap: () => ref.read(editProductFormProvider(widget.productId).notifier).toggleDefaultSize(size),
+              onTap: () => ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .toggleDefaultSize(size),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected 
-                      ? AppColors.primaryLaurel 
+                  color: isSelected
+                      ? AppColors.primaryLaurel
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected 
-                        ? AppColors.primaryLaurel 
+                    color: isSelected
+                        ? AppColors.primaryLaurel
                         : AppColors.borderColor,
                   ),
                 ),
                 child: Text(
                   size,
                   style: GoogleFonts.notoSansKr(
-                    color: isSelected 
-                        ? Colors.white 
-                        : AppColors.textAppBlack,
+                    color: isSelected ? Colors.white : AppColors.textAppBlack,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1278,9 +1419,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             );
           }).toList(),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Selected Sizes
         if (formData.selectedSizes.isNotEmpty) ...[
           Text(
@@ -1318,7 +1459,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     ),
                     const SizedBox(width: 4),
                     GestureDetector(
-                      onTap: () => ref.read(editProductFormProvider(widget.productId).notifier).removeSize(size),
+                      onTap: () => ref
+                          .read(
+                            editProductFormProvider(widget.productId).notifier,
+                          )
+                          .removeSize(size),
                       child: const Icon(
                         Icons.close,
                         size: 16,
@@ -1346,9 +1491,13 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           spacing: 8,
           runSpacing: 8,
           children: EditProductFormNotifier.defaultColors.take(3).map((color) {
-            final isSelected = formData.selectedColors.any((c) => c.name == color.name);
+            final isSelected = formData.selectedColors.any(
+              (c) => c.name == color.name,
+            );
             return GestureDetector(
-              onTap: () => ref.read(editProductFormProvider(widget.productId).notifier).toggleDefaultColor(color),
+              onTap: () => ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .toggleDefaultColor(color),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -1368,7 +1517,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     Text(
                       color.name,
                       style: GoogleFonts.notoSansKr(
-                        color: color.color == Colors.white || color.color == Colors.yellow
+                        color:
+                            color.color == Colors.white ||
+                                color.color == Colors.yellow
                             ? Colors.black
                             : Colors.white,
                         fontWeight: FontWeight.w500,
@@ -1377,11 +1528,19 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     if (isSelected) ...[
                       const SizedBox(width: 4),
                       GestureDetector(
-                        onTap: () => ref.read(editProductFormProvider(widget.productId).notifier).toggleDefaultColor(color),
+                        onTap: () => ref
+                            .read(
+                              editProductFormProvider(
+                                widget.productId,
+                              ).notifier,
+                            )
+                            .toggleDefaultColor(color),
                         child: Icon(
                           Icons.close,
                           size: 16,
-                          color: color.color == Colors.white || color.color == Colors.yellow
+                          color:
+                              color.color == Colors.white ||
+                                  color.color == Colors.yellow
                               ? Colors.black
                               : Colors.white,
                         ),
@@ -1393,9 +1552,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             );
           }).toList(),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Custom Color Input
         Text(
           'Write product Color Code',
@@ -1459,9 +1618,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ),
           ],
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Selected Colors
         if (formData.selectedColors.isNotEmpty) ...[
           Text(
@@ -1508,7 +1667,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: () => ref.read(editProductFormProvider(widget.productId).notifier).removeColor(index),
+                      onTap: () => ref
+                          .read(
+                            editProductFormProvider(widget.productId).notifier,
+                          )
+                          .removeColor(index),
                       child: const Icon(
                         Icons.close,
                         size: 16,

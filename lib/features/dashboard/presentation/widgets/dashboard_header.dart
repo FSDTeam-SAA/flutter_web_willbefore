@@ -72,7 +72,7 @@ class DashboardHeader extends StatelessWidget {
           Row(
             children: [
               const Text(
-                'Mr. Raja',
+                'Admin',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   // color: AppTheme.textPrimary,
@@ -83,7 +83,7 @@ class DashboardHeader extends StatelessWidget {
                 radius: 20,
                 // backgroundColor: AppColors.primaryLaurel,
                 child: const Text(
-                  'MR',
+                  'AD',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,

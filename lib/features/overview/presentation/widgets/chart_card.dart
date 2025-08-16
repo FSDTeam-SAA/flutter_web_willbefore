@@ -44,10 +44,10 @@ class ChartCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  // color: AppColors.,
+                  color: AppColors.textSecondaryColor,
                 ),
               ),
               if (timeFilters.isNotEmpty)
@@ -68,13 +68,17 @@ class ChartCard extends StatelessWidget {
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            // color: isSelected ? AppColors.primaryLaurel : AppTheme.borderColor,
+                            color: isSelected
+                                ? AppColors.primaryLaurel
+                                : AppColors.borderColor,
                           ),
                         ),
                         child: Text(
                           filter,
                           style: TextStyle(
-                            // color: isSelected ? Colors.white : AppTheme.textSecondary,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textSecondaryColor,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -131,7 +135,7 @@ class ChartCard extends StatelessWidget {
               width: 24,
               height: height,
               decoration: BoxDecoration(
-                // color: AppColors.primaryLaurel,
+                color: AppColors.primaryLaurel,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -140,7 +144,7 @@ class ChartCard extends StatelessWidget {
               item.label,
               style: const TextStyle(
                 fontSize: 12,
-                // color: AppTheme.textSecondary,
+                color: AppColors.textSecondaryColor,
               ),
             ),
           ],
@@ -208,11 +212,11 @@ class AreaChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      // ..color = AppColors.primaryLaurel.withOpacity(0.3)
+      ..color = AppColors.primaryLaurel.withAlpha((0.3 * 255).toInt())
       ..style = PaintingStyle.fill;
 
     final strokePaint = Paint()
-      // ..color = AppColors.primaryLaurel
+      ..color = AppColors.primaryLaurel
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

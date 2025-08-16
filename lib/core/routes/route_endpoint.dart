@@ -27,7 +27,7 @@ class RouteEndpoint {
   // Product routes
   static const String products = '/products';
   static const String addProduct = '/products/add';
-  static const String editProduct = '/products/edit/:id';
+  // static const String editProduct = '/products/edit/:id';
 
   // Category routes
   static const String categories = '/categories';
