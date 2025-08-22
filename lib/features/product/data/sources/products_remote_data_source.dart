@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/models/product_migration_helper.dart';
-import '../../domain/models/product_model.dart';
+import '../models/product_migration_helper.dart';
+import '../models/product_model.dart';
 
 abstract class ProductsRemoteDataSource {
   Future<List<ProductModel>> getAllProducts();

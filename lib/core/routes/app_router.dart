@@ -86,11 +86,11 @@ class AppRouter {
               ),
             ],
           ),
-          // GoRoute(
-          //   path: '/orders',
-          //   name: 'orders',
-          //   builder: (context, state) => const OrderScreen(),
-          // ),
+          GoRoute(
+            path: '/orders',
+            name: 'orders',
+            builder: (context, state) => const OrdersScreen(),
+          ),
           GoRoute(
             path: RouteEndpoint.promos,
             name: 'promos',

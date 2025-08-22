@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../entrity/product.dart';
+import '../../domain/entrity/product.dart';
 
 class ProductModel {
   final String id;

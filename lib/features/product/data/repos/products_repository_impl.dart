@@ -3,7 +3,7 @@ import 'package:flutter_web_willbefore/features/product/domain/repos/product_rep
 import 'dart:typed_data';
 
 import '../../domain/entrity/product.dart';
-import '../../domain/models/product_model.dart';
+import '../models/product_model.dart';
 import '../../domain/requests/create_product_request.dart';
 import '../../domain/requests/update_product_request.dart';
 import '../sources/products_remote_data_source.dart';
