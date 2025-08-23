@@ -19,7 +19,7 @@ class AuthGuardState {
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: RouteEndpoint.dashboard,
-
+    
     redirect: (context, state) {
       final container = ProviderScope.containerOf(context);
       final authGuard = container.read(authGuardProvider);
