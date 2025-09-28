@@ -361,7 +361,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Showing ${startIndex + 1} to ${endIndex} of ${promos.length} results',
+                            'Showing ${startIndex + 1} to $endIndex of ${promos.length} results',
                             style: const TextStyle(
                               color: AppColors.textSecondaryColor,
                             ),

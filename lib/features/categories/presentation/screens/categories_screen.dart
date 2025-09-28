@@ -312,7 +312,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Showing ${startIndex + 1} to ${endIndex} of ${categories.length} results',
+                            'Showing ${startIndex + 1} to $endIndex of ${categories.length} results',
                             style: const TextStyle(
                               color: AppColors.textSecondaryColor,
                             ),

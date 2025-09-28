@@ -602,7 +602,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           )
         else
           DropdownButtonFormField<String>(
-            value: formData.selectedCategoryId,
+            initialValue: formData.selectedCategoryId,
             style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
@@ -682,7 +682,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           )
         else
           DropdownButtonFormField<String>(
-            value: formData.selectedPromoId,
+            initialValue: formData.selectedPromoId,
             style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: promosState.activePromos.isEmpty 
@@ -734,7 +734,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     style: GoogleFonts.notoSansKr(),
                   ),
                 );
-              }).toList(),
+              }),
             ],
             onChanged: (value) {
               ref.read(addProductFormProvider.notifier).updateSelectedPromo(value);

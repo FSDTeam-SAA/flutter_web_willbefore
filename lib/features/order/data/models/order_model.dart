@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutx_core/flutx_core.dart'; // Added flutx_core import for DPrint logging
-import '../../../product/domain/entrity/product.dart';
 import '../../domain/entities/order_entities.dart';
 import 'cart_item_model.dart';
 

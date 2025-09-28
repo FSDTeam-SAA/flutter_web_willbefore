@@ -386,7 +386,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Showing ${startIndex + 1} to ${endIndex} of ${products.length} results',
+                            'Showing ${startIndex + 1} to $endIndex of ${products.length} results',
                             style: const TextStyle(
                               color: AppColors.textSecondaryColor,
                             ),

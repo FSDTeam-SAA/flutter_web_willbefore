@@ -795,7 +795,7 @@ final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
           )
         else
           DropdownButtonFormField<String>(
-            value: formData.selectedCategoryId,
+            initialValue: formData.selectedCategoryId,
             style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
@@ -882,7 +882,7 @@ final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
           )
         else
           DropdownButtonFormField<String>(
-            value: formData.selectedPromoId,
+            initialValue: formData.selectedPromoId,
             style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: promosState.activePromos.isEmpty
@@ -936,7 +936,7 @@ final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
                     style: GoogleFonts.notoSansKr(),
                   ),
                 );
-              }).toList(),
+              }),
             ],
             onChanged: (value) {
               ref
