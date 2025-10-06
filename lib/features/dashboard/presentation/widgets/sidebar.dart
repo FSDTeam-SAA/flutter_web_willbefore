@@ -62,11 +62,11 @@ class Sidebar extends ConsumerWidget {
                   title: 'User Profile',
                   item: NavigationItem.userProfile,
                 ),
-                _buildNavItem(
-                  icon: Icons.settings_outlined,
-                  title: 'Setting',
-                  item: NavigationItem.settings,
-                ),
+                // _buildNavItem(
+                //   icon: Icons.settings_outlined,
+                //   title: 'Setting',
+                //   item: NavigationItem.settings,
+                // ),
               ],
             ),
           ),

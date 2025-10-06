@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +9,8 @@ import '../sources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   AuthRepositoryImpl(this.remoteDataSource);
 
@@ -27,6 +30,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout() async {
     await remoteDataSource.logout();
+  }
+
+  @override
+  Future<String?> getUserRole(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      return doc.data()?['role'] as String?;
+    } catch (e) {
+      throw Exception('Failed to fetch user role: $e');
+    }
   }
 }
 

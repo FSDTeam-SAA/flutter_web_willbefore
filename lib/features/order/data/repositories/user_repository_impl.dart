@@ -2,7 +2,7 @@ import '../../domain/entities/user_entities.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../sources/user_remote_data_source.dart';
 
-class UserRepositoryImpl implements UserRepository {
+class UserRepositoryImpl implements UserProfileRepository {
   final UserRemoteDataSource _remoteDataSource;
 
   UserRepositoryImpl(this._remoteDataSource);
@@ -15,9 +15,9 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Stream<List<User>> getAllUsersStream() {
-    return _remoteDataSource
-        .getAllUsersStream()
-        .map((models) => models.map((model) => model.toEntity()).toList());
+    return _remoteDataSource.getAllUsersStream().map(
+      (models) => models.map((model) => model.toEntity()).toList(),
+    );
   }
 
   @override

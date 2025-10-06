@@ -49,6 +49,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     final resutl = await ref.read(authProvider.notifier).login(data);
 
+    DPrint.log("Success login in login screen -> $resutl");
+
     if (resutl && mounted) {
       context.pushReplacement(RouteEndpoint.dashboard);
     }

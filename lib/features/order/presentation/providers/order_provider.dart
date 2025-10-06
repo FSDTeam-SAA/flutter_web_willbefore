@@ -44,7 +44,7 @@ class AdminOrderState {
 
 class AdminOrderNotifier extends StateNotifier<AdminOrderState> {
   final OrderRepository _orderRepository;
-  final UserRepository _userRepository;
+  final UserProfileRepository _userRepository;
 
   AdminOrderNotifier(this._orderRepository, this._userRepository)
     : super(const AdminOrderState());

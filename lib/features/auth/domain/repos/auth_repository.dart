@@ -5,5 +5,6 @@ import '../models/user_model.dart';
 abstract class AuthRepository {
   Future<UserModel> login(LoginRequest request);
   Stream<UserModel?> get authStateChanges;
+  Future<String?> getUserRole(String uid);
   Future<void> logout();
 }

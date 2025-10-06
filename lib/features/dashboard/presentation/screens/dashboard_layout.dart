@@ -20,7 +20,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/orders')) return NavigationItem.order;
     if (location.startsWith('/promos')) return NavigationItem.promo;
     if (location.startsWith('/profile')) return NavigationItem.userProfile;
-    if (location.startsWith('/settings')) return NavigationItem.settings;
+    // if (location.startsWith('/settings')) return NavigationItem.settings;
     return NavigationItem.dashboard;
   }
 
@@ -34,7 +34,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/promos/add')) return 'Add Promo';
     if (location.startsWith('/promos')) return 'Promos';
     if (location.startsWith('/profile')) return 'User Profile';
-    if (location.startsWith('/settings')) return 'Settings';
+    // if (location.startsWith('/settings')) return 'Settings';
     return 'Dashboard';
   }
 
@@ -48,7 +48,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/promos/add')) return ['Dashboard', 'Promo List', 'Add Promo'];
     if (location.startsWith('/promos')) return ['Dashboard', 'Promo List'];
     if (location.startsWith('/profile')) return ['Dashboard', 'User Profile'];
-    if (location.startsWith('/settings')) return ['Dashboard', 'Settings'];
+    // if (location.startsWith('/settings')) return ['Dashboard', 'Settings'];
     return ['Dashboard'];
   }
 
@@ -72,9 +72,9 @@ class DashboardLayout extends StatelessWidget {
       case NavigationItem.userProfile:
         context.go('/profile');
         break;
-      case NavigationItem.settings:
-        context.go('/settings');
-        break;
+      // case NavigationItem.settings:
+      //   context.go('/settings');
+      //   break;
     }
   }
 

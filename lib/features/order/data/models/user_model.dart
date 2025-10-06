@@ -10,6 +10,9 @@ class UserModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
+  final String role; // Add role field
+  final String? displayName; // Add displayName for consistency
+  final bool isEmailVerified; // Add email verification status
 
   const UserModel({
     required this.id,
@@ -19,6 +22,9 @@ class UserModel {
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true,
+    this.role = 'user', // Default role
+    this.displayName,
+    this.isEmailVerified = false,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -27,10 +33,13 @@ class UserModel {
       id: doc.id,
       email: data['email'] ?? '',
       name: data['name'],
+      displayName: data['displayName'],
       phoneNumber: data['phoneNumber'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       isActive: data['isActive'] ?? true,
+      role: data['role'] ?? 'user',
+      isEmailVerified: data['isEmailVerified'] ?? false,
     );
   }
 
@@ -62,10 +71,56 @@ class UserModel {
     return {
       'email': email,
       'name': name,
+      'displayName': displayName,
       'phoneNumber': phoneNumber,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
+      'role': role,
+      'isEmailVerified': isEmailVerified,
     };
+  }
+
+  // Add the missing copyWith method
+  UserModel copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? displayName,
+    String? phoneNumber,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isActive,
+    String? role,
+    bool? isEmailVerified,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      displayName: displayName ?? this.displayName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
+      role: role ?? this.role,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+    );
+  }
+
+  // Helper getter for display name
+  String get displayNameOrEmail => displayName ?? name ?? email;
+
+  // Helper getter for initials
+  String get initials {
+    final nameToUse = displayName ?? name;
+    if (nameToUse != null && nameToUse.isNotEmpty) {
+      final names = nameToUse.split(' ');
+      if (names.length > 1) {
+        return '${names[0][0]}${names[1][0]}'.toUpperCase();
+      }
+      return names[0][0].toUpperCase();
+    }
+    return email[0].toUpperCase();
   }
 }

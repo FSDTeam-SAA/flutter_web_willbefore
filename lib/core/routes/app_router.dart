@@ -19,7 +19,7 @@ class AuthGuardState {
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: RouteEndpoint.dashboard,
-    
+
     redirect: (context, state) {
       final container = ProviderScope.containerOf(context);
       final authGuard = container.read(authGuardProvider);
@@ -90,6 +90,17 @@ class AppRouter {
             path: '/orders',
             name: 'orders',
             builder: (context, state) => const OrdersScreen(),
+            routes: [
+              GoRoute(
+                path: RouteEndpoint.ordersDetails, // e.g., 'details'
+                name: RouteEndpoint.ordersDetails,
+                builder: (context, state) {
+                  final order =
+                      state.extra as Order; // Cast state.extra to Order
+                  return OrderDetailsScreen(order: order);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: RouteEndpoint.promos,
@@ -108,15 +119,15 @@ class AppRouter {
               // ),
             ],
           ),
-          // GoRoute(
-          //   path: '/profile',
-          //   name: 'profile',
-          //   builder: (context, state) => const UserProfileScreen(),
-          // ),
+          GoRoute(
+            path: '/profile',
+            name: 'profile',
+            builder: (context, state) => const AllUserProfileScreen(),
+          ),
           // GoRoute(
           //   path: '/settings',
           //   name: 'settings',
-          //   builder: (context, state) => const SettingsScreen(),
+          //   builder: (context, state) => const AdminSettingScreen(),
           // ),
         ],
       ),

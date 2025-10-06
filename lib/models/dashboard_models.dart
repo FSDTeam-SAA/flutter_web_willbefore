@@ -70,5 +70,5 @@ enum NavigationItem {
   order,
   promo,
   userProfile,
-  settings,
+  // settings,
 }

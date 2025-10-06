@@ -1,13 +1,19 @@
 import 'package:flutter_web_willbefore/features/auth/domain/requests/login_request.dart';
-
-import '../repos/auth_repository.dart';
+import 'package:flutter_web_willbefore/features/auth/domain/models/user_model.dart';
+import 'package:flutter_web_willbefore/features/auth/domain/repos/auth_repository.dart';
 
 class LoginUseCase {
-  final AuthRepository repository;
+  final AuthRepository _authRepository;
 
-  LoginUseCase(this.repository);
+  LoginUseCase(this._authRepository);
 
-  Future<void> call(LoginRequest request) async {
-    await repository.login(request);
+  Future<UserModel> call(LoginRequest request) async {
+    final user = await _authRepository.login(request);
+    // if (user.role != 'admin') {
+    //   // Sign out non-admin users
+    //   await _authRepository.logout();
+    //   throw Exception('Access denied: Only admins can log in');
+    // }
+    return user;
   }
 }

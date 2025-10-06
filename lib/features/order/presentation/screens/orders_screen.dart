@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_willbefore/core/routes/route_endpoint.dart';
 import 'package:flutx_core/flutx_core.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/order_entities.dart';
 import '../../domain/entities/user_entities.dart';
 import '../providers/order_provider.dart';
+import 'order_details_screen.dart'; // Add this import
 
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
@@ -22,7 +25,6 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch users and their orders when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(adminOrderProvider.notifier).fetchAllOrders();
     });
@@ -124,7 +126,6 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
               ),
             ],
           ),
-          // Filter dropdown
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -193,7 +194,6 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
       ),
       child: Column(
         children: [
-          // Table header
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -250,7 +250,6 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
               ],
             ),
           ),
-          // Table body
           Expanded(
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -308,194 +307,201 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
             updatedAt: DateTime.now(),
           );
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-      ),
-      child: Row(
-        children: [
-          // Order Details
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Order #${order.id.substring(0, 8)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Customer ID: ${order.userId.substring(0, 8)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          // Customer Info - Enhanced with user data
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.name ?? 'Unknown User',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-                if (user.phoneNumber != null) ...[
-                  const SizedBox(height: 2),
+    return InkWell(
+      onTap: () {
+        context.goNamed(RouteEndpoint.ordersDetails, extra: order);
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => OrderDetailsScreen(order: order),
+        //   ),
+        // );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    user.phoneNumber!,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // Products
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                // Product image
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[200],
-                  ),
-                  child:
-                      firstItem?.product.imageUrls != null &&
-                          firstItem!.product.imageUrls.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            firstItem.product.imageUrls.first,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.orange[100],
-                                child: const Icon(
-                                  Icons.shopping_bag,
-                                  color: Colors.orange,
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Container(
-                          color: Colors.orange[100],
-                          child: const Icon(
-                            Icons.shopping_bag,
-                            color: Colors.orange,
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        firstItem?.product.title ?? 'Unknown Product',
-                        style: const TextStyle(fontSize: 14),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Total Price
-          Expanded(
-            flex: 1,
-            child: Text(
-              '\$${order.total.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.green,
-              ),
-            ),
-          ),
-          // Date
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('MMM dd, yyyy').format(order.createdAt),
-                  style: const TextStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('HH:mm').format(order.createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          // Status with Update Button
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: order.status.color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    order.status.displayName,
-                    style: TextStyle(
-                      color: order.status.color,
-                      fontSize: 12,
+                    'Order #${order.id.substring(0, 8)}',
+                    style: const TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: isUpdating
-                      ? null
-                      : () => _showStatusUpdateDialog(order),
-                  icon: isUpdating
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.edit, size: 18),
-                  tooltip: 'Update Status',
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Customer ID: ${order.userId.substring(0, 8)}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name ?? 'Unknown User',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  if (user.phoneNumber != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      user.phoneNumber!,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[200],
+                    ),
+                    child:
+                        firstItem?.product.imageUrls != null &&
+                            firstItem!.product.imageUrls.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              firstItem.product.imageUrls.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.orange[100],
+                                  child: const Icon(
+                                    Icons.shopping_bag,
+                                    color: Colors.orange,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Container(
+                            color: Colors.orange[100],
+                            child: const Icon(
+                              Icons.shopping_bag,
+                              color: Colors.orange,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          firstItem?.product.title ?? 'Unknown Product',
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${order.items.length} item${order.items.length > 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Text(
+                '\$${order.total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DateFormat('MMM dd, yyyy').format(order.createdAt),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('HH:mm').format(order.createdAt),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: order.status.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      order.status.displayName,
+                      style: TextStyle(
+                        color: order.status.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: isUpdating
+                        ? null
+                        : () => _showStatusUpdateDialog(order),
+                    icon: isUpdating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.edit, size: 18),
+                    tooltip: 'Update Status',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -597,14 +603,12 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
           ),
           Row(
             children: [
-              // Previous button
               IconButton(
                 onPressed: _currentPage > 1
                     ? () => setState(() => _currentPage--)
                     : null,
                 icon: const Icon(Icons.chevron_left),
               ),
-              // Page numbers
               ...List.generate(totalPages.clamp(0, 5), (index) {
                 final pageNum = index + 1;
                 final isActive = pageNum == _currentPage;
@@ -642,7 +646,6 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
                   ),
                 );
               }),
-              // Next button
               IconButton(
                 onPressed: _currentPage < totalPages
                     ? () => setState(() => _currentPage++)
@@ -668,15 +671,4 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
     final endIndex = (startIndex + _itemsPerPage).clamp(0, orders.length);
     return orders.sublist(startIndex, endIndex);
   }
-}
-
-// Navigation enum for sidebar
-enum NavigationItem {
-  dashboard,
-  categories,
-  productList,
-  order,
-  promo,
-  userProfile,
-  settings,
 }
