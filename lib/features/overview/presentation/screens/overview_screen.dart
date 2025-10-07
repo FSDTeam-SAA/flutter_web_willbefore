@@ -54,20 +54,28 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
 
     switch (filter) {
       case 'Day':
-        intervalStart = now.subtract(const Duration(days: 1)).millisecondsSinceEpoch ~/ 1000;
+        intervalStart =
+            now.subtract(const Duration(days: 1)).millisecondsSinceEpoch ~/
+            1000;
         intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
         break;
       case 'Week':
-        intervalStart = now.subtract(const Duration(days: 7)).millisecondsSinceEpoch ~/ 1000;
+        intervalStart =
+            now.subtract(const Duration(days: 7)).millisecondsSinceEpoch ~/
+            1000;
         intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
         break;
       case 'Month':
-        intervalStart = now.subtract(const Duration(days: 30)).millisecondsSinceEpoch ~/ 1000;
+        intervalStart =
+            now.subtract(const Duration(days: 30)).millisecondsSinceEpoch ~/
+            1000;
         intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
         break;
       case 'Year':
       default:
-        intervalStart = now.subtract(const Duration(days: 365)).millisecondsSinceEpoch ~/ 1000;
+        intervalStart =
+            now.subtract(const Duration(days: 365)).millisecondsSinceEpoch ~/
+            1000;
         intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
         break;
     }
@@ -97,7 +105,8 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
 
       for (var charge in charges ?? []) {
         if (charge['status'] == 'succeeded') {
-          final amount = (charge['amount'] as int) / 100.0; // Convert cents to dollars
+          final amount =
+              (charge['amount'] as int) / 100.0; // Convert cents to dollars
           total += amount;
 
           final timestamp = charge['created'] as int;
@@ -159,9 +168,9 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
         _isLoadingCharges = false;
       });
       DPrint.error("Error fetching charges: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching charges: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error fetching charges: $e')));
     }
   }
 
@@ -285,7 +294,9 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
     int totalUsers = userState.users.where((u) => u.role != 'admin').length;
 
     if (productsState.products.isNotEmpty) {
-      totalLiveProducts = productsState.products.where((p) => p.isActive).length;
+      totalLiveProducts = productsState.products
+          .where((p) => p.isActive)
+          .length;
     }
 
     return SingleChildScrollView(
@@ -386,77 +397,78 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
             },
           ),
 
-          const SizedBox(height: 32),
+          // const SizedBox(height: 32),
 
-          // Charges Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Charges',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              DropdownButton<String>(
-                value: _chargeFilter,
-                items: ['All', 'Succeeded', 'Pending', 'Failed']
-                    .map((filter) => DropdownMenuItem(
-                          value: filter,
-                          child: Text(filter),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _chargeFilter = value;
-                      _fetchCharges();
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _isLoadingCharges
-              ? Center(child: CircularProgressIndicator())
-              : _charges.isEmpty
-                  ? Center(child: Text('No charges found'))
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: _charges.length,
-                      itemBuilder: (context, index) {
-                        final charge = _charges[index];
-                        return Card(
-                          margin: EdgeInsets.symmetric(vertical: 4),
-                          child: ListTile(
-                            title: Text('Amount: \$${charge['amount'] / 100}'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Status: ${charge['status']}'),
-                                Text('Date: ${DateTime.fromMillisecondsSinceEpoch(charge['created'] * 1000).toString()}'),
-                                if (charge['metadata']['shippo_address_id'] != null)
-                                  Text('Shippo Address ID: ${charge['metadata']['shippo_address_id']}'),
-                                if (charge['metadata']['order_items'] != null)
-                                  Text('Items: ${charge['metadata']['order_items']}'),
-                              ],
-                            ),
-                            trailing: Icon(
-                              charge['status'] == 'succeeded'
-                                  ? Icons.check_circle
-                                  : charge['status'] == 'pending'
-                                      ? Icons.hourglass_empty
-                                      : Icons.error,
-                              color: charge['status'] == 'succeeded'
-                                  ? Colors.green
-                                  : charge['status'] == 'pending'
-                                      ? Colors.orange
-                                      : Colors.red,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+          // // Charges Section
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text(
+          //       'Recent Charges',
+          //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          //     ),
+          //     DropdownButton<String>(
+          //       value: _chargeFilter,
+          //       items: ['All', 'Succeeded', 'Pending', 'Failed']
+          //           .map((filter) => DropdownMenuItem(
+          //                 value: filter,
+          //                 child: Text(filter),
+          //               ))
+          //           .toList(),
+          //       onChanged: (value) {
+          //         if (value != null) {
+          //           setState(() {
+          //             _chargeFilter = value;
+          //             _fetchCharges();
+          //           });
+          //         }
+          //       },
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 8),
+
+          // _isLoadingCharges
+          //     ? Center(child: CircularProgressIndicator())
+          //     : _charges.isEmpty
+          //         ? Center(child: Text('No charges found'))
+          //         : ListView.builder(
+          //             shrinkWrap: true,
+          //             physics: NeverScrollableScrollPhysics(),
+          //             itemCount: _charges.length,
+          //             itemBuilder: (context, index) {
+          //               final charge = _charges[index];
+          //               return Card(
+          //                 margin: EdgeInsets.symmetric(vertical: 4),
+          //                 child: ListTile(
+          //                   title: Text('Amount: \$${charge['amount'] / 100}'),
+          //                   subtitle: Column(
+          //                     crossAxisAlignment: CrossAxisAlignment.start,
+          //                     children: [
+          //                       Text('Status: ${charge['status']}'),
+          //                       Text('Date: ${DateTime.fromMillisecondsSinceEpoch(charge['created'] * 1000).toString()}'),
+          //                       if (charge['metadata']['shippo_address_id'] != null)
+          //                         Text('Shippo Address ID: ${charge['metadata']['shippo_address_id']}'),
+          //                       if (charge['metadata']['order_items'] != null)
+          //                         Text('Items: ${charge['metadata']['order_items']}'),
+          //                     ],
+          //                   ),
+          //                   trailing: Icon(
+          //                     charge['status'] == 'succeeded'
+          //                         ? Icons.check_circle
+          //                         : charge['status'] == 'pending'
+          //                             ? Icons.hourglass_empty
+          //                             : Icons.error,
+          //                     color: charge['status'] == 'succeeded'
+          //                         ? Colors.green
+          //                         : charge['status'] == 'pending'
+          //                             ? Colors.orange
+          //                             : Colors.red,
+          //                   ),
+          //                 ),
+          //               );
+          //             },
+          //           ),
         ],
       ),
     );
