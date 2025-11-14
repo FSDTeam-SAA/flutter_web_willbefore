@@ -309,7 +309,22 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
 
     return InkWell(
       onTap: () {
-        context.goNamed(RouteEndpoint.ordersDetails, extra: order);
+        // context.goNamed(RouteEndpoint.ordersDetails, extra: order);
+        // Inside _buildOrderRow → after status chip
+        if (order.status == OrderStatus.confirmed) {
+          ElevatedButton.icon(
+            onPressed: isUpdating
+                ? null
+                : () =>
+                      context.goNamed(RouteEndpoint.fulfillOrder, extra: order),
+            icon: const Icon(Icons.local_shipping, size: 16),
+            label: const Text('Fulfill', style: TextStyle(fontSize: 12)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          );
+        }
         // Navigator.push(
         //   context,
         //   MaterialPageRoute(

@@ -15,6 +15,7 @@ class Product {
   final List<String> imageUrls;
   final Map<String, dynamic>? facilities;
   final bool isActive;
+  final double weightOz;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,6 +34,7 @@ class Product {
     required this.imageUrls,
     this.facilities,
     this.isActive = true,
+    this.weightOz = 0.0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -52,6 +54,7 @@ class Product {
     List<String>? imageUrls,
     Map<String, dynamic>? facilities,
     bool? isActive,
+    double? weightOz,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -70,6 +73,7 @@ class Product {
       imageUrls: imageUrls ?? this.imageUrls,
       facilities: facilities ?? this.facilities,
       isActive: isActive ?? this.isActive,
+      weightOz: weightOz ?? this.weightOz,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
