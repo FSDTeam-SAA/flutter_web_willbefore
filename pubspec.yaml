@@ -67,6 +67,7 @@ dependencies:
 
   # Rich Text Editor (Web Compatible)
   html_editor_enhanced: ^2.7.1
+  flutter_html: ^3.0.0
   path_provider: ^2.1.5
   http: ^1.5.0
   flutter_stripe: ^12.0.2

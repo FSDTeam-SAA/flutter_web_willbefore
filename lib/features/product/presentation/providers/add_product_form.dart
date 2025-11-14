@@ -17,6 +17,7 @@ class ProductFormData {
   final String freeReturnDays;
   final String customSize;
   final String customColorName;
+  final String description;
 
   const ProductFormData({
     this.title = '',
@@ -32,6 +33,7 @@ class ProductFormData {
     this.freeReturnDays = '',
     this.customSize = '',
     this.customColorName = '',
+    this.description = '',
   });
 
   ProductFormData copyWith({
@@ -48,6 +50,7 @@ class ProductFormData {
     String? freeReturnDays,
     String? customSize,
     String? customColorName,
+    String? description,
   }) {
     return ProductFormData(
       title: title ?? this.title,
@@ -63,6 +66,7 @@ class ProductFormData {
       freeReturnDays: freeReturnDays ?? this.freeReturnDays,
       customSize: customSize ?? this.customSize,
       customColorName: customColorName ?? this.customColorName,
+      description: description ?? this.description,
     );
   }
 }
@@ -107,7 +111,16 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
   AddProductFormNotifier() : super(const ProductFormData());
 
   // Default sizes and colors
-  static const List<String> defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
+  static const List<String> defaultSizes = [
+    'XS',
+    'S',
+    'M',
+    'L',
+    'XL',
+    'XXL',
+    '2XL',
+    '3XL',
+  ];
   static const List<ProductColor> defaultColors = [
     ProductColor(name: 'Red', color: Colors.red),
     ProductColor(name: 'Black', color: Colors.black),
@@ -163,6 +176,10 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
     state = state.copyWith(customColorName: colorName);
   }
 
+  void updateDescription(String description) {
+    state = state.copyWith(description: description);
+  }
+
   void addImages(List<ProductImage> newImages) {
     final currentImages = List<ProductImage>.from(state.selectedImages);
     for (var image in newImages) {
@@ -187,10 +204,7 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
       final sizes = List<String>.from(state.selectedSizes);
       if (!sizes.contains(size)) {
         sizes.add(size);
-        state = state.copyWith(
-          selectedSizes: sizes,
-          customSize: '',
-        );
+        state = state.copyWith(selectedSizes: sizes, customSize: '');
       }
     }
   }
@@ -224,19 +238,18 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
 
   void addCustomColor(String colorName, Color color) {
     final colors = List<ProductColor>.from(state.selectedColors);
-    final existingIndex = colors.indexWhere((c) => c.name.toLowerCase() == colorName.toLowerCase());
-    
+    final existingIndex = colors.indexWhere(
+      (c) => c.name.toLowerCase() == colorName.toLowerCase(),
+    );
+
     final newColor = ProductColor(name: colorName, color: color);
     if (existingIndex != -1) {
       colors[existingIndex] = newColor;
     } else {
       colors.add(newColor);
     }
-    
-    state = state.copyWith(
-      selectedColors: colors,
-      customColorName: '',
-    );
+
+    state = state.copyWith(selectedColors: colors, customColorName: '');
   }
 
   void removeColor(int index) {
@@ -253,6 +266,7 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
 }
 
 // Provider
-final addProductFormProvider = StateNotifierProvider<AddProductFormNotifier, ProductFormData>((ref) {
-  return AddProductFormNotifier();
-});
+final addProductFormProvider =
+    StateNotifierProvider<AddProductFormNotifier, ProductFormData>((ref) {
+      return AddProductFormNotifier();
+    });
