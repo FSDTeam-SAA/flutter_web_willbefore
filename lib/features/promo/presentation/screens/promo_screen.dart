@@ -303,7 +303,9 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                                 // Actions
                                 SizedBox(
                                   width: 100,
-                                  child: Row(
+                                  child: Wrap(
+                                    spacing: 0,
+                                    runSpacing: 0,
                                     children: [
                                       IconButton(
                                         onPressed: () => context.go(

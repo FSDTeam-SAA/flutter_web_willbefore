@@ -314,7 +314,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         .addCustomSize();
   }
 
-final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
+  final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
 
   Future<void> _addCustomColor() async {
     final formData = ref.read(editProductFormProvider(widget.productId));
@@ -342,8 +342,8 @@ final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
           child: ColorPicker(
             pickerColor: selectedColor,
             onColorChanged: (color) {
-                ref.read(selectedColorProvider.notifier).state = color;
-              },
+              ref.read(selectedColorProvider.notifier).state = color;
+            },
             pickerAreaHeightPercent: 0.8,
           ),
         ),

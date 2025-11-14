@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
+import 'package:flutx_core/flutx_core.dart';
 
 import '../../data/repos/promos_repository_impl.dart';
 import '../../domain/models/promo_model.dart';
@@ -53,7 +54,9 @@ class PromosState extends BaseState {
   }
 }
 
-final promosProvider = StateNotifierProvider<PromosProvider, PromosState>((ref) {
+final promosProvider = StateNotifierProvider<PromosProvider, PromosState>((
+  ref,
+) {
   final repository = ref.watch(promosRepositoryProvider);
   final getPromosUseCase = GetPromosUseCase(repository);
   final createPromoUseCase = CreatePromoUseCase(repository);
@@ -80,14 +83,18 @@ class PromosProvider extends StateNotifier<PromosState> {
     this._updatePromoUseCase,
     this._deletePromoUseCase,
   ) : super(const PromosState()) {
-    loadPromos();
+    // loadPromos();
     _listenToPromos();
   }
 
   void _listenToPromos() {
     _getPromosUseCase.stream().listen(
       (promos) {
-        final activePromos = promos.where((promo) => promo.isCurrentlyActive).toList();
+        final activePromos = promos
+            .where((promo) => promo.isCurrentlyActive)
+            .toList();
+
+        DPrint.log("Promo codes 2 : $activePromos");
         state = state.copyWith(
           promos: promos,
           activePromos: activePromos,
@@ -103,20 +110,21 @@ class PromosProvider extends StateNotifier<PromosState> {
     );
   }
 
-  Future<void> loadPromos() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final promos = await _getPromosUseCase.call();
-      final activePromos = await _getPromosUseCase.getActive();
-      state = state.copyWith(
-        promos: promos,
-        activePromos: activePromos,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
-    }
-  }
+  // Future<void> loadPromos() async {
+  //   state = state.copyWith(isLoading: true, errorMessage: null);
+  //   try {
+  //     final promos = await _getPromosUseCase.call();
+  //     final activePromos = await _getPromosUseCase.getActive();
+  //     DPrint.log("Promo codes : ${promos.first.code}");
+  //     state = state.copyWith(
+  //       promos: promos,
+  //       activePromos: activePromos,
+  //       isLoading: false,
+  //     );
+  //   } catch (e) {
+  //     state = state.copyWith(isLoading: false, errorMessage: e.toString());
+  //   }
+  // }
 
   Future<bool> createPromo(CreatePromoRequest request) async {
     state = state.copyWith(isCreating: true, errorMessage: null);

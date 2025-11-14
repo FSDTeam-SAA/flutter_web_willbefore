@@ -6,14 +6,17 @@ import 'package:flutter_web_willbefore/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:url_strategy/url_strategy.dart';
 
-import 'core/constants/stripe_secret_key.dart';
 import 'core/routes/route_endpoint.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  Stripe.publishableKey = stripePublishableKey;
+
+  final config = await rootBundle.loadString(
+    'assets/config/stripe_config.json',
+  );
+  Stripe.publishableKey = config;
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
 

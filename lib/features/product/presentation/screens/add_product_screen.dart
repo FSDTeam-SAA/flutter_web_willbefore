@@ -829,33 +829,35 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Container(
-          height: 400,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderColor),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: HtmlEditor(
-            controller: _htmlController,
-            htmlEditorOptions: const HtmlEditorOptions(
-              hint: "Type product description here...",
-              shouldEnsureVisible: true,
-              initialText: "",
-              autoAdjustHeight: false,
-              mobileLongPressDuration: Duration(milliseconds: 600),
-            ),
-            htmlToolbarOptions: HtmlToolbarOptions(
-              toolbarPosition: ToolbarPosition.aboveEditor,
-              toolbarType: ToolbarType.nativeScrollable,
-              customToolbarButtons: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.arrow_right_alt,
-                    color: AppColors.primaryLaurel,
-                  ),
-                  tooltip: 'Move Cursor to Start',
-                  onPressed: () async {
-                    await _htmlController.evaluateJavascriptWeb('''
+        Stack(
+          children: [
+            Container(
+              height: 400,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.borderColor),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: HtmlEditor(
+                controller: _htmlController,
+                htmlEditorOptions: const HtmlEditorOptions(
+                  hint: "Type product description here...",
+                  shouldEnsureVisible: true,
+                  initialText: "",
+                  autoAdjustHeight: false,
+                  mobileLongPressDuration: Duration(milliseconds: 600),
+                ),
+                htmlToolbarOptions: HtmlToolbarOptions(
+                  toolbarPosition: ToolbarPosition.aboveEditor,
+                  toolbarType: ToolbarType.nativeScrollable,
+                  customToolbarButtons: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_right_alt,
+                        color: AppColors.primaryLaurel,
+                      ),
+                      tooltip: 'Move Cursor to Start',
+                      onPressed: () async {
+                        await _htmlController.evaluateJavascriptWeb('''
                     const editor = document.querySelector('.note-editable');
                     const range = document.createRange();
                     const sel = window.getSelection();
@@ -865,82 +867,87 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     sel.addRange(range);
                     editor.focus();
                   ''');
-                  },
+                      },
+                    ),
+                  ],
+                  customToolbarInsertionIndices: [0], // Insert at the beginning
+                  defaultToolbarButtons: [
+                    StyleButtons(style: false),
+                    FontSettingButtons(fontName: false, fontSizeUnit: false),
+                    FontButtons(
+                      bold: true,
+                      italic: true,
+                      underline: true,
+                      clearAll: false,
+                      strikethrough: false,
+                      superscript: false,
+                      subscript: false,
+                    ),
+                    ColorButtons(foregroundColor: true, highlightColor: true),
+                    ListButtons(ul: true, ol: true, listStyles: false),
+                    ParagraphButtons(
+                      textDirection: false,
+                      lineHeight: false,
+                      caseConverter: false,
+                    ),
+                    InsertButtons(
+                      link: false,
+                      picture: false,
+                      audio: false,
+                      video: false,
+                      otherFile: false,
+                      table: false,
+                      hr: false,
+                    ),
+                    OtherButtons(
+                      fullscreen: false,
+                      codeview: true,
+                      undo: true,
+                      redo: true,
+                      help: false,
+                    ),
+                  ],
+                  onButtonPressed:
+                      (
+                        ButtonType type,
+                        bool? status,
+                        Function? updateStatus,
+                      ) async {
+                        await _setCursorToEnd();
+                        return true;
+                      },
+                  onDropdownChanged:
+                      (
+                        DropdownType type,
+                        dynamic changed,
+                        void Function(dynamic)? updateStatus,
+                      ) async {
+                        await _setCursorToEnd();
+                        return true;
+                      },
+                  buttonColor:
+                      AppColors.primaryLaurel, // Match your app's theme
+                  buttonSelectedColor: AppColors.primaryLaurel.withOpacity(0.7),
+                  buttonBorderColor: AppColors.borderColor,
+                  buttonBorderRadius: BorderRadius.circular(8),
+                  renderSeparatorWidget: true,
+                  separatorWidget: const VerticalDivider(
+                    indent: 2,
+                    endIndent: 2,
+                    color: AppColors.borderColor,
+                  ),
                 ),
-              ],
-              customToolbarInsertionIndices: [0], // Insert at the beginning
-              defaultToolbarButtons: [
-                StyleButtons(style: false),
-                FontSettingButtons(fontName: false, fontSizeUnit: false),
-                FontButtons(
-                  bold: true,
-                  italic: true,
-                  underline: true,
-                  clearAll: false,
-                  strikethrough: false,
-                  superscript: false,
-                  subscript: false,
+                otherOptions: const OtherOptions(
+                  height: 350,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
                 ),
-                ColorButtons(foregroundColor: true, highlightColor: true),
-                ListButtons(ul: true, ol: true, listStyles: false),
-                ParagraphButtons(
-                  textDirection: false,
-                  lineHeight: false,
-                  caseConverter: false,
-                ),
-                InsertButtons(
-                  link: false,
-                  picture: false,
-                  audio: false,
-                  video: false,
-                  otherFile: false,
-                  table: false,
-                  hr: false,
-                ),
-                OtherButtons(
-                  fullscreen: false,
-                  codeview: true,
-                  undo: true,
-                  redo: true,
-                  help: false,
-                ),
-              ],
-              onButtonPressed:
-                  (
-                    ButtonType type,
-                    bool? status,
-                    Function? updateStatus,
-                  ) async {
-                    await _setCursorToEnd();
-                    return true;
-                  },
-              onDropdownChanged:
-                  (
-                    DropdownType type,
-                    dynamic changed,
-                    void Function(dynamic)? updateStatus,
-                  ) async {
-                    await _setCursorToEnd();
-                    return true;
-                  },
-              buttonColor: AppColors.primaryLaurel, // Match your app's theme
-              buttonSelectedColor: AppColors.primaryLaurel.withOpacity(0.7),
-              buttonBorderColor: AppColors.borderColor,
-              buttonBorderRadius: BorderRadius.circular(8),
-              renderSeparatorWidget: true,
-              separatorWidget: const VerticalDivider(
-                indent: 2,
-                endIndent: 2,
-                color: AppColors.borderColor,
               ),
             ),
-            otherOptions: const OtherOptions(
-              height: 350,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-              ),
-            ),
-          ),
+
+            
+          ],
         ),
       ],
     );

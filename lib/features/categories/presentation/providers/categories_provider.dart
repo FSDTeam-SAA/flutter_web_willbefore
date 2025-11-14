@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
-
+import 'package:flutx_core/flutx_core.dart';
 
 import '../../data/repos/categories_repo_impl.dart';
 import '../../domain/models/category_model.dart';
@@ -46,20 +46,21 @@ class CategoriesState extends BaseState {
   }
 }
 
-final categoriesProvider = StateNotifierProvider<CategoriesProvider, CategoriesState>((ref) {
-  final repository = ref.watch(categoriesRepositoryProvider);
-  final getCategoriesUseCase = GetCategoriesUseCase(repository);
-  final createCategoryUseCase = CreateCategoryUseCase(repository);
-  final updateCategoryUseCase = UpdateCategoryUseCase(repository);
-  final deleteCategoryUseCase = DeleteCategoryUseCase(repository);
+final categoriesProvider =
+    StateNotifierProvider<CategoriesProvider, CategoriesState>((ref) {
+      final repository = ref.watch(categoriesRepositoryProvider);
+      final getCategoriesUseCase = GetCategoriesUseCase(repository);
+      final createCategoryUseCase = CreateCategoryUseCase(repository);
+      final updateCategoryUseCase = UpdateCategoryUseCase(repository);
+      final deleteCategoryUseCase = DeleteCategoryUseCase(repository);
 
-  return CategoriesProvider(
-    getCategoriesUseCase,
-    createCategoryUseCase,
-    updateCategoryUseCase,
-    deleteCategoryUseCase,
-  );
-});
+      return CategoriesProvider(
+        getCategoriesUseCase,
+        createCategoryUseCase,
+        updateCategoryUseCase,
+        deleteCategoryUseCase,
+      );
+    });
 
 class CategoriesProvider extends StateNotifier<CategoriesState> {
   final GetCategoriesUseCase _getCategoriesUseCase;
@@ -95,6 +96,7 @@ class CategoriesProvider extends StateNotifier<CategoriesState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final categories = await _getCategoriesUseCase.call();
+      DPrint.log("Product Category : $categories");
       state = state.copyWith(categories: categories, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

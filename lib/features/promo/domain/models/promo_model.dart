@@ -1,3 +1,5 @@
+import 'package:flutx_core/flutx_core.dart';
+
 class PromoModel {
   final String id;
   final String title;
@@ -38,6 +40,7 @@ class PromoModel {
   });
 
   factory PromoModel.fromFirestore(Map<String, dynamic> data, String id) {
+    DPrint.log("Promo model Fetch Data : $data");
     return PromoModel(
       id: id,
       title: data['title'] ?? '',
@@ -52,8 +55,12 @@ class PromoModel {
       isActive: data['isActive'] ?? true,
       usageLimit: data['usageLimit'] ?? 0,
       usedCount: data['usedCount'] ?? 0,
-      applicableProductIds: List<String>.from(data['applicableProductIds'] ?? []),
-      applicableCategoryIds: List<String>.from(data['applicableCategoryIds'] ?? []),
+      applicableProductIds: List<String>.from(
+        data['applicableProductIds'] ?? [],
+      ),
+      applicableCategoryIds: List<String>.from(
+        data['applicableCategoryIds'] ?? [],
+      ),
       createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt'] ?? 0),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(data['updatedAt'] ?? 0),
     );
@@ -82,10 +89,10 @@ class PromoModel {
 
   bool get isCurrentlyActive {
     final now = DateTime.now();
-    return isActive && 
-           now.isAfter(startDate) && 
-           now.isBefore(endDate) &&
-           (usageLimit == 0 || usedCount < usageLimit);
+    return isActive &&
+        now.isAfter(startDate) &&
+        now.isBefore(endDate) &&
+        (usageLimit == 0 || usedCount < usageLimit);
   }
 
   bool get isExpired {
@@ -126,7 +133,8 @@ class PromoModel {
       usageLimit: usageLimit ?? this.usageLimit,
       usedCount: usedCount ?? this.usedCount,
       applicableProductIds: applicableProductIds ?? this.applicableProductIds,
-      applicableCategoryIds: applicableCategoryIds ?? this.applicableCategoryIds,
+      applicableCategoryIds:
+          applicableCategoryIds ?? this.applicableCategoryIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
