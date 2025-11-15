@@ -42,6 +42,7 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
         country: 'US',
         isResidential: false,
       );
+      
       if (fromAddr == null) throw Exception('Failed to create warehouse address');
 
       // 2. Customer Address

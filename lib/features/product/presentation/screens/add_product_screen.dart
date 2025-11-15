@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -257,9 +258,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   Future<void> _submit() async {
+    DPrint.log("Submit Inform");
     if (!_formKey.currentState!.validate()) return;
 
     final formData = ref.read(addProductFormProvider);
+    DPrint.log("Submit Inform 2 ${formData}");
 
     if (formData.selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -273,6 +276,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     // Get HTML content from editor
     final description = await _htmlController.getText();
+
+    DPrint.log("Submit Inform 3 ${description}");
 
     final facilities = <String, dynamic>{};
     if (formData.overOrderDiscount.isNotEmpty) {
@@ -304,6 +309,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           .toList(),
       facilities: facilities.isNotEmpty ? facilities : null,
     );
+
+    DPrint.log(request.actualPrice);
 
     final success = await ref
         .read(productsProvider.notifier)

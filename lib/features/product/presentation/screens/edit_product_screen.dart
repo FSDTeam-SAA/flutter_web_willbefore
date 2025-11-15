@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutx_core/flutx_core.dart';
@@ -949,83 +950,221 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   Widget _buildRichTextDescriptionSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Edit Description',
-          style: GoogleFonts.notoSansKr(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textAppBlack,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          height: 400,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderColor),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: HtmlEditor(
-            controller: _htmlController,
-            htmlEditorOptions: HtmlEditorOptions(
-              hint: "Edit product description here...",
-              shouldEnsureVisible: true,
-              inputType: HtmlInputType.text,
-              initialText: "",
-              autoAdjustHeight: false,
+    return Consumer(
+      builder: (context, ref, child) {
+        final formData = ref.watch(editProductFormProvider(widget.productId));
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Edit Description',
+              style: GoogleFonts.notoSansKr(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textAppBlack,
+              ),
             ),
-            htmlToolbarOptions: const HtmlToolbarOptions(
-              toolbarPosition: ToolbarPosition.aboveEditor,
-              toolbarType: ToolbarType.nativeScrollable,
-              defaultToolbarButtons: [
-                StyleButtons(style: false),
-                FontSettingButtons(fontName: false, fontSizeUnit: false),
-                FontButtons(
-                  bold: true,
-                  italic: true,
-                  underline: true,
-                  clearAll: false,
-                  strikethrough: false,
-                  superscript: false,
-                  subscript: false,
+            const SizedBox(height: 12),
+
+            // ---------- PREVIEW BOX ----------
+            GestureDetector(
+              onTap: _openHtmlEditorDialog,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.borderColor),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey[50],
                 ),
-                ColorButtons(foregroundColor: true, highlightColor: true),
-                ListButtons(ul: true, ol: true, listStyles: false),
-                ParagraphButtons(
-                  textDirection: false,
-                  lineHeight: false,
-                  caseConverter: false,
-                ),
-                InsertButtons(
-                  link: false,
-                  picture: false,
-                  audio: false,
-                  video: false,
-                  otherFile: false,
-                  table: false,
-                  hr: false,
-                ),
-                OtherButtons(
-                  fullscreen: false,
-                  codeview: false,
-                  undo: true,
-                  redo: true,
-                  help: false,
-                ),
-              ],
+                constraints: const BoxConstraints(minHeight: 120),
+                child: formData.description.trim().isEmpty
+                    ? Text(
+                        'Tap to edit product description...',
+                        style: GoogleFonts.notoSansKr(
+                          color: AppColors.textSecondaryHintColor,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: Html(
+                          data: formData.description,
+                          style: {
+                            "body": Style(
+                              fontFamily: GoogleFonts.notoSansKr().fontFamily,
+                              fontSize: FontSize(14),
+                              color: AppColors.textAppBlack,
+                              margin: Margins.zero,
+                              padding: HtmlPaddings.zero,
+                            ),
+                          },
+                        ),
+                      ),
+              ),
             ),
-            otherOptions: const OtherOptions(
-              height: 350,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
+
+            const SizedBox(height: 12),
+
+            // ---------- EDIT BUTTON ----------
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: _openHtmlEditorDialog,
+                icon: const Icon(Icons.edit, size: 16),
+                label: Text(
+                  'Edit Description',
+                  style: GoogleFonts.notoSansKr(fontSize: 14),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryLaurel,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _openHtmlEditorDialog() async {
+    final currentText = ref
+        .read(editProductFormProvider(widget.productId))
+        .description;
+
+    // Start with a clean editor
+    _htmlController.clear();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppColors.primaryLaurel,
+            foregroundColor: Colors.white,
+            title: Text(
+              'Edit Product Description',
+              style: GoogleFonts.notoSansKr(fontWeight: FontWeight.w600),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  try {
+                    final text = await _htmlController.getText() ?? '';
+                    String cleanText = text.trim();
+
+                    // Remove empty <p> tags
+                    if (cleanText == '<p><br></p>' ||
+                        cleanText == '<p></p>' ||
+                        cleanText.isEmpty) {
+                      cleanText = '';
+                    }
+
+                    if (mounted) {
+                      ref
+                          .read(
+                            editProductFormProvider(widget.productId).notifier,
+                          )
+                          .updateDescription(cleanText);
+                    }
+                  } catch (e) {
+                    debugPrint('getText failed: $e');
+                  } finally {
+                    Navigator.of(dialogContext).pop();
+                    _htmlController.clear();
+                  }
+                },
+                child: Text(
+                  'Save',
+                  style: GoogleFonts.notoSansKr(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 200,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.borderColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: HtmlEditor(
+                    controller: _htmlController,
+                    htmlEditorOptions: HtmlEditorOptions(
+                      hint: "Edit your product description here...",
+                      shouldEnsureVisible: true,
+                      initialText: "<p></p>", // clean start
+                      autoAdjustHeight: false,
+                    ),
+                    htmlToolbarOptions: HtmlToolbarOptions(
+                      toolbarPosition: ToolbarPosition.aboveEditor,
+                      toolbarType: ToolbarType.nativeScrollable,
+                      defaultToolbarButtons: [
+                        StyleButtons(),
+                        FontSettingButtons(fontName: false),
+                        FontButtons(
+                          bold: true,
+                          italic: true,
+                          underline: true,
+                          clearAll: true,
+                        ),
+                        ColorButtons(foregroundColor: true),
+                        ListButtons(ul: true, ol: true),
+                        ParagraphButtons(),
+                        InsertButtons(link: true, picture: false),
+                        OtherButtons(
+                          fullscreen: false,
+                          codeview: true,
+                          undo: true,
+                          redo: true,
+                        ),
+                      ],
+                      buttonColor: AppColors.primaryLaurel,
+                      buttonSelectedColor: AppColors.primaryLaurel.withOpacity(
+                        0.8,
+                      ),
+                    ),
+                    otherOptions: const OtherOptions(height: 600),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ],
+      ),
     );
+
+    // Load the current description **after** the dialog is built
+    // if (mounted) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) async {
+    //     try {
+    //       // await _htmlController.setText(currentText.isEmpty ? "<p></p>" : currentText);
+    //     } catch (e) {
+    //       debugPrint("setText failed (mobile fallback): $e");
+    //     }
+    //   });
+    // }
   }
 
   Widget _buildFacilitiesSection() {
