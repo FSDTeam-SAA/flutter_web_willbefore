@@ -100,6 +100,15 @@ class AppRouter {
                   return OrderDetailsScreen(order: order);
                 },
               ),
+
+              GoRoute(
+                path: RouteEndpoint.fullfillOrder, // 'ful-fill-Order'
+                name: RouteEndpoint.fullfillOrder,
+                builder: (context, state) {
+                  final order = state.extra as Order;
+                  return FullfillOrderScreen(order: order);
+                },
+              ),
             ],
           ),
           GoRoute(

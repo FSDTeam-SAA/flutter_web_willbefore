@@ -5,39 +5,26 @@ import '../../../product/domain/entrity/product.dart';
 enum OrderStatus {
   pending,
   confirmed,
-  processing,
-  shipped,
-  delivered,
   cancelled;
 
+  /// Human-readable name (used in UI)
   String get displayName {
     switch (this) {
       case OrderStatus.pending:
         return 'Pending';
       case OrderStatus.confirmed:
         return 'Confirmed';
-      case OrderStatus.processing:
-        return 'Processing';
-      case OrderStatus.shipped:
-        return 'Shipped';
-      case OrderStatus.delivered:
-        return 'Completed';
       case OrderStatus.cancelled:
         return 'Cancelled';
     }
   }
 
+  /// Colour badge for each status
   Color get color {
     switch (this) {
       case OrderStatus.pending:
         return Colors.orange;
       case OrderStatus.confirmed:
-        return Colors.blue;
-      case OrderStatus.processing:
-        return Colors.grey;
-      case OrderStatus.shipped:
-        return Colors.purple;
-      case OrderStatus.delivered:
         return Colors.green;
       case OrderStatus.cancelled:
         return Colors.red;

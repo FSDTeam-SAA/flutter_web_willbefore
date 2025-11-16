@@ -9,6 +9,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/categories/presentation/screens/categories_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_layout.dart';
 import '../../features/order/domain/entities/order_entities.dart';
+import '../../features/order/presentation/screens/fulfill_order_screen.dart';
 import '../../features/overview/presentation/screens/overview_screen.dart';
 import '../../features/product/presentation/screens/add_product_screen.dart';
 import '../../features/product/presentation/screens/edit_product_screen.dart';
@@ -40,7 +41,7 @@ class RouteEndpoint {
   // Order routes
   static const String orders = '/orders';
   static const String ordersDetails = 'orders-details';
-  static const String fulfillOrder = 'ful-fill-Order';
+  static const String fullfillOrder = 'ful-fill-Order';
 
   // Promo routes
   static const String promos = '/promos';

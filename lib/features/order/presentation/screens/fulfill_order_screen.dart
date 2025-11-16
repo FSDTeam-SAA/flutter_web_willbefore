@@ -9,15 +9,16 @@ import '../../domain/entities/order_entities.dart';
 
 import '../providers/order_provider.dart';
 
-class FulfillOrderScreen extends ConsumerStatefulWidget {
+class FullfillOrderScreen extends ConsumerStatefulWidget {
   final Order order;
-  const FulfillOrderScreen({super.key, required this.order});
+  const FullfillOrderScreen({super.key, required this.order});
 
   @override
-  ConsumerState<FulfillOrderScreen> createState() => _FulfillOrderScreenState();
+  ConsumerState<FullfillOrderScreen> createState() =>
+      _FulfillOrderScreenState();
 }
 
-class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
+class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   bool _isLoading = false;
   String? _trackingNumber;
   String? _labelUrl;
@@ -42,8 +43,10 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
         country: 'US',
         isResidential: false,
       );
-      
-      if (fromAddr == null) throw Exception('Failed to create warehouse address');
+
+      if (fromAddr == null) {
+        throw Exception('Failed to create warehouse address');
+      }
 
       // 2. Customer Address
       final toAddr = await _shippo.createAddress(
@@ -86,19 +89,24 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
       final rates = shipment['rates'] as List;
       final uspsRate = rates
           .where((r) => (r['provider'] as String).contains('USPS'))
-          .reduce((a, b) => double.parse(a['amount']) < double.parse(b['amount']) ? a : b);
+          .reduce(
+            (a, b) =>
+                double.parse(a['amount']) < double.parse(b['amount']) ? a : b,
+          );
 
       // 6. Buy Label
       final transaction = await _shippo.buyLabel(uspsRate['object_id']);
       if (transaction == null) throw Exception('Failed to purchase label');
 
       // 7. Update Order
-      final success = await ref.read(adminOrderProvider.notifier).fulfillOrder(
-        orderId: widget.order.id,
-        trackingNumber: transaction['tracking_number'],
-        labelUrl: transaction['label_url'],
-        shippoTransactionId: transaction['object_id'],
-      );
+      final success = await ref
+          .read(adminOrderProvider.notifier)
+          .fulfillOrder(
+            orderId: widget.order.id,
+            trackingNumber: transaction['tracking_number'],
+            labelUrl: transaction['label_url'],
+            shippoTransactionId: transaction['object_id'],
+          );
 
       if (!success) throw Exception('Failed to update order in database');
 
@@ -109,7 +117,10 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Label generated successfully!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Label generated successfully!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -143,12 +154,26 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _generateLabel,
                   icon: _isLoading
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.local_shipping),
-                  label: Text(_isLoading ? 'Generating Label...' : 'Generate Shipping Label'),
+                  label: Text(
+                    _isLoading
+                        ? 'Generating Label...'
+                        : 'Generate Shipping Label',
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[600],
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),
@@ -169,8 +194,14 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
             if (_error != null)
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(8)),
-                child: Text('Error: $_error', style: const TextStyle(color: Colors.red)),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Error: $_error',
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
           ],
         ),
@@ -184,16 +215,23 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Shipping To', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            'Shipping To',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Text(widget.order.shippingAddress.fullName),
           Text(widget.order.shippingAddress.addressLine1),
-          Text('${widget.order.shippingAddress.city}, ${widget.order.shippingAddress.state} ${widget.order.shippingAddress.postalCode}'),
+          Text(
+            '${widget.order.shippingAddress.city}, ${widget.order.shippingAddress.state} ${widget.order.shippingAddress.postalCode}',
+          ),
           Text(widget.order.shippingAddress.country),
         ],
       ),
@@ -212,9 +250,15 @@ class _FulfillOrderScreenState extends ConsumerState<FulfillOrderScreen> {
         children: [
           const Icon(Icons.check_circle, color: Colors.green, size: 48),
           const SizedBox(height: 12),
-          const Text('Label Generated!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            'Label Generated!',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          Text('Tracking: $_trackingNumber', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            'Tracking: $_trackingNumber',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

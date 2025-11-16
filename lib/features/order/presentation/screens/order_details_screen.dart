@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/routes/route_endpoint.dart';
 import '../../domain/entities/order_entities.dart';
 import '../../domain/entities/user_entities.dart';
 import '../providers/order_provider.dart';
@@ -50,7 +53,8 @@ class OrderDetailsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _buildShippingInfo(),
             const SizedBox(height: 24),
-            _buildStatusUpdateSection(context, ref),
+            // _buildStatusUpdateSection(context, ref),
+            _buildFulfillButton(context),
           ],
         ),
       ),
@@ -335,6 +339,34 @@ class OrderDetailsScreen extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFulfillButton(BuildContext context) {
+    if (order.status != OrderStatus.confirmed) return const SizedBox.shrink();
+
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () {
+          context.goNamed(RouteEndpoint.fullfillOrder, extra: order);
+        },
+        icon: const Icon(
+          Icons.local_shipping,
+          size: 18,
+          color: AppColors.white,
+        ),
+        label: const Text(
+          'Fulfill Order',
+          style: TextStyle(fontSize: 16, color: AppColors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryLaurel,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }
