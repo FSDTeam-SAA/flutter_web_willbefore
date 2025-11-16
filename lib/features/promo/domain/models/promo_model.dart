@@ -40,7 +40,6 @@ class PromoModel {
   });
 
   factory PromoModel.fromFirestore(Map<String, dynamic> data, String id) {
-    DPrint.log("Promo model Fetch Data : $data");
     return PromoModel(
       id: id,
       title: data['title'] ?? '',

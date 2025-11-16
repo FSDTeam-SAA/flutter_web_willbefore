@@ -1,11 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 
@@ -220,7 +218,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           'Pick Color for "${formData.customColorName}"',
-          style: GoogleFonts.notoSansKr(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: SingleChildScrollView(
           child: ColorPicker(
@@ -232,7 +230,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel', style: GoogleFonts.notoSansKr()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -247,10 +245,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryLaurel,
             ),
-            child: Text(
-              'Set Color',
-              style: GoogleFonts.notoSansKr(color: Colors.white),
-            ),
+            child: Text('Set Color', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -262,7 +257,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final formData = ref.read(addProductFormProvider);
-    DPrint.log("Submit Inform 2 ${formData}");
+    DPrint.log("Submit Inform 2 $formData");
 
     if (formData.selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -275,9 +270,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     }
 
     // Get HTML content from editor
-    final description = await _htmlController.getText();
-
-    DPrint.log("Submit Inform 3 ${description}");
+    // final description = await _htmlController.getText();
+    // final description = await _openHtmlEditorAndGetDescription();
+    // DPrint.log("Submit Inform 3 $description");
 
     final facilities = <String, dynamic>{};
     if (formData.overOrderDiscount.isNotEmpty) {
@@ -291,7 +286,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
     final request = CreateProductRequest(
       title: formData.title.trim(),
-      description: description,
+      description: formData.description,
       actualPrice: double.parse(formData.actualPrice),
       discountPrice: formData.discountPrice.isNotEmpty
           ? double.parse(formData.discountPrice)
@@ -413,7 +408,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Add product title',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -422,12 +417,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: _titleController,
-          style: GoogleFonts.notoSansKr(),
+          style: TextStyle(),
           decoration: InputDecoration(
             hintText: 'Add your title...',
-            hintStyle: GoogleFonts.notoSansKr(
-              color: AppColors.textSecondaryHintColor,
-            ),
+            hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.borderColor),
@@ -467,7 +460,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         if (isNarrow) {
           return Column(
             children: [
-              _buildPriceField('Actual_Price', _actualPriceController, true),
+              _buildPriceField('Actual Price', _actualPriceController, true),
               const SizedBox(height: 16),
               _buildPriceField(
                 'Discount_Price',
@@ -484,7 +477,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           children: [
             Expanded(
               child: _buildPriceField(
-                'Actual_Price',
+                'Actual Price',
                 _actualPriceController,
                 true,
               ),
@@ -492,7 +485,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: _buildPriceField(
-                'Discount_Price',
+                'Discount Price',
                 _discountPriceController,
                 false,
               ),
@@ -515,7 +508,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -524,13 +517,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: controller,
-          style: GoogleFonts.notoSansKr(),
+          style: TextStyle(),
           decoration: InputDecoration(
             hintText:
                 'Add product ${label.toLowerCase().replaceAll('_', ' ')}...',
-            hintStyle: GoogleFonts.notoSansKr(
-              color: AppColors.textSecondaryHintColor,
-            ),
+            hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.borderColor),
@@ -607,7 +598,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Select Product Categories',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -647,7 +638,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'No categories available',
-                    style: GoogleFonts.notoSansKr(color: Colors.orange),
+                    style: TextStyle(color: Colors.orange),
                   ),
                 ],
               ),
@@ -656,12 +647,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         else
           DropdownButtonFormField<String>(
             initialValue: formData.selectedCategoryId,
-            style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
+            style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
-              hintStyle: GoogleFonts.notoSansKr(
-                color: AppColors.textSecondaryHintColor,
-              ),
+              hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppColors.borderColor),
@@ -689,7 +678,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 value: category.id,
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
-                  child: Text(category.name, style: GoogleFonts.notoSansKr()),
+                  child: Text(category.name, style: TextStyle()),
                 ),
               );
             }).toList(),
@@ -718,7 +707,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Select product Promo',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -746,12 +735,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         else
           DropdownButtonFormField<String>(
             initialValue: formData.selectedPromoId,
-            style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
+            style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: promosState.activePromos.isEmpty
                   ? 'No active promos available'
                   : 'Select a promo',
-              hintStyle: GoogleFonts.notoSansKr(
+              hintStyle: TextStyle(
                 color: promosState.activePromos.isEmpty
                     ? Colors.orange
                     : AppColors.textSecondaryHintColor,
@@ -787,7 +776,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             items: [
               DropdownMenuItem<String>(
                 value: null,
-                child: Text('Select a promo', style: GoogleFonts.notoSansKr()),
+                child: Text('Select a promo', style: TextStyle()),
               ),
               ...promosState.activePromos.map<DropdownMenuItem<String>>((
                 promo,
@@ -796,7 +785,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   value: promo.id,
                   child: Text(
                     '${promo.title} (${promo.code})',
-                    style: GoogleFonts.notoSansKr(),
+                    style: TextStyle(),
                   ),
                 );
               }),
@@ -834,7 +823,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           children: [
             Text(
               'Create Description',
-              style: GoogleFonts.notoSansKr(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textAppBlack,
@@ -857,7 +846,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 child: formData.description.trim().isEmpty
                     ? Text(
                         'Tap to add product description...',
-                        style: GoogleFonts.notoSansKr(
+                        style: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                           fontStyle: FontStyle.italic,
                         ),
@@ -867,7 +856,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                           data: formData.description,
                           style: {
                             "body": Style(
-                              fontFamily: GoogleFonts.notoSansKr().fontFamily,
+                              fontFamily: TextStyle().fontFamily,
                               fontSize: FontSize(14),
                               color: AppColors.textAppBlack,
                               margin: Margins.zero,
@@ -887,10 +876,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               child: ElevatedButton.icon(
                 onPressed: _openHtmlEditorDialog,
                 icon: const Icon(Icons.edit, size: 16),
-                label: Text(
-                  'Edit Description',
-                  style: GoogleFonts.notoSansKr(fontSize: 14),
-                ),
+                label: Text('Edit Description', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryLaurel,
                   foregroundColor: Colors.white,
@@ -926,7 +912,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             foregroundColor: Colors.white,
             title: Text(
               'Edit Product Description',
-              style: GoogleFonts.notoSansKr(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             leading: IconButton(
               icon: const Icon(Icons.close),
@@ -936,7 +922,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               TextButton(
                 onPressed: () async {
                   try {
-                    final text = await _htmlController.getText() ?? '';
+                    final text = await _htmlController.getText();
                     String cleanText = text.trim();
 
                     // Remove empty paragraph tags
@@ -961,7 +947,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 },
                 child: Text(
                   'Save',
-                  style: GoogleFonts.notoSansKr(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
@@ -983,6 +969,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   ),
                   child: HtmlEditor(
                     controller: _htmlController,
+                    callbacks: Callbacks(
+                      onChangeContent: (data) {
+                        DPrint.log("Http Data : $data");
+                      },
+                      
+                    ),
                     htmlEditorOptions: HtmlEditorOptions(
                       hint: "Type your product description here...",
                       shouldEnsureVisible: true,
@@ -1028,15 +1020,17 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
 
     // AFTER dialog opens, set the text via JS (works on Web)
-    // if (mounted) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) async {
-    //     try {
-    //       await _htmlController.setText(currentText.isEmpty ? "<p></p>" : currentText);
-    //     } catch (e) {
-    //       debugPrint("setText failed (normal on mobile): $e");
-    //     }
-    //   });
-    // }
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          _htmlController.setText(
+            currentText.isEmpty ? "<p></p>" : currentText,
+          );
+        } catch (e) {
+          debugPrint("setText failed (normal on mobile): $e");
+        }
+      });
+    }
   }
 
   Widget _buildFacilitiesSection() {
@@ -1045,7 +1039,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Our Facilities',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1067,10 +1061,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _overOrderDiscountController,
-                      style: GoogleFonts.notoSansKr(),
+                      style: TextStyle(),
                       decoration: InputDecoration(
                         hintText: 'Add over order discount price...',
-                        hintStyle: GoogleFonts.notoSansKr(
+                        hintStyle: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                         ),
                         border: InputBorder.none,
@@ -1088,10 +1082,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _freeReturnDaysController,
-                      style: GoogleFonts.notoSansKr(),
+                      style: TextStyle(),
                       decoration: InputDecoration(
                         hintText: 'Add free return days...',
-                        hintStyle: GoogleFonts.notoSansKr(
+                        hintStyle: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                         ),
                         border: InputBorder.none,
@@ -1116,7 +1110,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Add Product Image',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1158,14 +1152,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Click to upload images',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             color: AppColors.textSecondaryColor,
                             fontSize: 14,
                           ),
                         ),
                         Text(
                           'Support: JPG, PNG, GIF (Max 5MB each)',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             color: AppColors.textSecondaryHintColor,
                             fontSize: 12,
                           ),
@@ -1250,10 +1244,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         const SizedBox(height: 8),
         Text(
           '${formData.selectedImages.length}/${AddProductFormNotifier.maxImages} images selected',
-          style: GoogleFonts.notoSansKr(
-            color: AppColors.textSecondaryColor,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.textSecondaryColor, fontSize: 12),
         ),
       ],
     );
@@ -1267,7 +1258,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       children: [
         Text(
           'Create Product Size',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1281,12 +1272,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             Expanded(
               child: TextFormField(
                 controller: _sizeController,
-                style: GoogleFonts.notoSansKr(),
+                style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter product size...',
-                  hintStyle: GoogleFonts.notoSansKr(
-                    color: AppColors.textSecondaryHintColor,
-                  ),
+                  hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.borderColor),
@@ -1323,10 +1312,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   vertical: 12,
                 ),
               ),
-              child: Text(
-                'Set',
-                style: GoogleFonts.notoSansKr(color: Colors.white),
-              ),
+              child: Text('Set', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1336,7 +1322,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         // Default Sizes
         Text(
           'Default Sizes',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondaryColor,
@@ -1370,7 +1356,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 ),
                 child: Text(
                   size,
-                  style: GoogleFonts.notoSansKr(
+                  style: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textAppBlack,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1386,7 +1372,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         if (formData.selectedSizes.isNotEmpty) ...[
           Text(
             'Selected Sizes',
-            style: GoogleFonts.notoSansKr(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondaryColor,
@@ -1412,7 +1398,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   children: [
                     Text(
                       size,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         color: AppColors.primaryLaurel,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1474,7 +1460,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   children: [
                     Text(
                       color.name,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         color:
                             color.color == Colors.white ||
                                 color.color == Colors.yellow
@@ -1512,7 +1498,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         // Custom Color Input
         Text(
           'Write product Color Code',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1524,12 +1510,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             Expanded(
               child: TextFormField(
                 controller: _colorNameController,
-                style: GoogleFonts.notoSansKr(),
+                style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter a color code...',
-                  hintStyle: GoogleFonts.notoSansKr(
-                    color: AppColors.textSecondaryHintColor,
-                  ),
+                  hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.borderColor),
@@ -1565,10 +1549,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   vertical: 12,
                 ),
               ),
-              child: Text(
-                'Set',
-                style: GoogleFonts.notoSansKr(color: Colors.white),
-              ),
+              child: Text('Set', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1579,7 +1560,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         if (formData.selectedColors.isNotEmpty) ...[
           Text(
             'Selected Colors',
-            style: GoogleFonts.notoSansKr(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondaryColor,
@@ -1614,7 +1595,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     const SizedBox(width: 8),
                     Text(
                       productColor.name,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: AppColors.textAppBlack,
                       ),
@@ -1662,9 +1643,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             ),
             child: Text(
               'Cancel',
-              style: GoogleFonts.notoSansKr(
-                color: AppColors.textSecondaryColor,
-              ),
+              style: TextStyle(color: AppColors.textSecondaryColor),
             ),
           ),
         ),
@@ -1690,7 +1669,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   )
                 : Text(
                     'Save',
-                    style: GoogleFonts.notoSansKr(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),

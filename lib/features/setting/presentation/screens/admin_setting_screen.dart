@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/utils/extensions/button_extensions.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 
 import '../../../../core/common/widgets/app_scaffold.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -85,7 +85,7 @@ class _AdminSettingScreenState extends ConsumerState<AdminSettingScreen> {
                       children: [
                         Text(
                           user?.email ?? 'Admin',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textAppLaurel,
@@ -94,7 +94,7 @@ class _AdminSettingScreenState extends ConsumerState<AdminSettingScreen> {
                         Gap.h4,
                         Text(
                           user?.email ?? '',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 
@@ -337,7 +336,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           'Pick Color for "${formData.customColorName}"',
-          style: GoogleFonts.notoSansKr(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: SingleChildScrollView(
           child: ColorPicker(
@@ -351,7 +350,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel', style: GoogleFonts.notoSansKr()),
+            child: Text('Cancel', style: TextStyle()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -368,7 +367,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ),
             child: Text(
               'Set Color',
-              style: GoogleFonts.notoSansKr(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -471,7 +470,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       // appBar: AppBar(
       //   title: Text(
       //     'Edit Product',
-      //     style: GoogleFonts.notoSansKr(
+      //     style: TextStyle(
       //       fontWeight: FontWeight.w600,
       //       color: AppColors.textAppBlack,
       //     ),
@@ -554,7 +553,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Edit product title',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -563,10 +562,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: _titleController,
-          style: GoogleFonts.notoSansKr(),
+          style: TextStyle(),
           decoration: InputDecoration(
             hintText: 'Edit your title...',
-            hintStyle: GoogleFonts.notoSansKr(
+            hintStyle: TextStyle(
               color: AppColors.textSecondaryHintColor,
             ),
             border: OutlineInputBorder(
@@ -656,7 +655,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -665,11 +664,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         const SizedBox(height: 12),
         TextFormField(
           controller: controller,
-          style: GoogleFonts.notoSansKr(),
+          style: TextStyle(),
           decoration: InputDecoration(
             hintText:
                 'Edit product ${label.toLowerCase().replaceAll('_', ' ')}...',
-            hintStyle: GoogleFonts.notoSansKr(
+            hintStyle: TextStyle(
               color: AppColors.textSecondaryHintColor,
             ),
             border: OutlineInputBorder(
@@ -748,7 +747,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Select Product Categories',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -788,7 +787,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'No categories available',
-                    style: GoogleFonts.notoSansKr(color: Colors.orange),
+                    style: TextStyle(color: Colors.orange),
                   ),
                 ],
               ),
@@ -797,10 +796,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         else
           DropdownButtonFormField<String>(
             initialValue: formData.selectedCategoryId,
-            style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
+            style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
-              hintStyle: GoogleFonts.notoSansKr(
+              hintStyle: TextStyle(
                 color: AppColors.textSecondaryHintColor,
               ),
               border: OutlineInputBorder(
@@ -828,7 +827,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ) {
               return DropdownMenuItem<String>(
                 value: category.id,
-                child: Text(category.name, style: GoogleFonts.notoSansKr()),
+                child: Text(category.name, style: TextStyle()),
               );
             }).toList(),
             onChanged: (value) {
@@ -856,7 +855,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Select product Promo',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -884,12 +883,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         else
           DropdownButtonFormField<String>(
             initialValue: formData.selectedPromoId,
-            style: GoogleFonts.notoSansKr(color: AppColors.textAppBlack),
+            style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: promosState.activePromos.isEmpty
                   ? 'No active promos available'
                   : 'Select a promo',
-              hintStyle: GoogleFonts.notoSansKr(
+              hintStyle: TextStyle(
                 color: promosState.activePromos.isEmpty
                     ? Colors.orange
                     : AppColors.textSecondaryHintColor,
@@ -925,7 +924,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             items: [
               DropdownMenuItem<String>(
                 value: null,
-                child: Text('No promo', style: GoogleFonts.notoSansKr()),
+                child: Text('No promo', style: TextStyle()),
               ),
               ...promosState.activePromos.map<DropdownMenuItem<String>>((
                 promo,
@@ -934,7 +933,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   value: promo.id,
                   child: Text(
                     '${promo.title} (${promo.code})',
-                    style: GoogleFonts.notoSansKr(),
+                    style: TextStyle(),
                   ),
                 );
               }),
@@ -959,7 +958,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           children: [
             Text(
               'Edit Description',
-              style: GoogleFonts.notoSansKr(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textAppBlack,
@@ -982,7 +981,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 child: formData.description.trim().isEmpty
                     ? Text(
                         'Tap to edit product description...',
-                        style: GoogleFonts.notoSansKr(
+                        style: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                           fontStyle: FontStyle.italic,
                         ),
@@ -992,7 +991,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                           data: formData.description,
                           style: {
                             "body": Style(
-                              fontFamily: GoogleFonts.notoSansKr().fontFamily,
+                              fontFamily: TextStyle().fontFamily,
                               fontSize: FontSize(14),
                               color: AppColors.textAppBlack,
                               margin: Margins.zero,
@@ -1014,7 +1013,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 icon: const Icon(Icons.edit, size: 16),
                 label: Text(
                   'Edit Description',
-                  style: GoogleFonts.notoSansKr(fontSize: 14),
+                  style: TextStyle(fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryLaurel,
@@ -1053,7 +1052,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             foregroundColor: Colors.white,
             title: Text(
               'Edit Product Description',
-              style: GoogleFonts.notoSansKr(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
             leading: IconButton(
               icon: const Icon(Icons.close),
@@ -1089,7 +1088,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 },
                 child: Text(
                   'Save',
-                  style: GoogleFonts.notoSansKr(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1173,7 +1172,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Our Facilities',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1195,10 +1194,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _overOrderDiscountController,
-                      style: GoogleFonts.notoSansKr(),
+                      style: TextStyle(),
                       decoration: InputDecoration(
                         hintText: 'Edit over order discount price...',
-                        hintStyle: GoogleFonts.notoSansKr(
+                        hintStyle: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                         ),
                         border: InputBorder.none,
@@ -1216,10 +1215,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _freeReturnDaysController,
-                      style: GoogleFonts.notoSansKr(),
+                      style: TextStyle(),
                       decoration: InputDecoration(
                         hintText: 'Edit free return days...',
-                        hintStyle: GoogleFonts.notoSansKr(
+                        hintStyle: TextStyle(
                           color: AppColors.textSecondaryHintColor,
                         ),
                         border: InputBorder.none,
@@ -1246,7 +1245,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Edit Product Images',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1304,14 +1303,14 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'Click to upload images',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             color: AppColors.textSecondaryColor,
                             fontSize: 14,
                           ),
                         ),
                         Text(
                           'Support: JPG, PNG, GIF (Max 5MB each)',
-                          style: GoogleFonts.notoSansKr(
+                          style: TextStyle(
                             color: AppColors.textSecondaryHintColor,
                             fontSize: 12,
                           ),
@@ -1429,7 +1428,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         const SizedBox(height: 8),
         Text(
           '$totalImages/${EditProductFormNotifier.maxImages} images selected',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             color: AppColors.textSecondaryColor,
             fontSize: 12,
           ),
@@ -1446,7 +1445,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       children: [
         Text(
           'Edit Product Size',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1460,10 +1459,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             Expanded(
               child: TextFormField(
                 controller: _sizeController,
-                style: GoogleFonts.notoSansKr(),
+                style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter product size...',
-                  hintStyle: GoogleFonts.notoSansKr(
+                  hintStyle: TextStyle(
                     color: AppColors.textSecondaryHintColor,
                   ),
                   border: OutlineInputBorder(
@@ -1504,7 +1503,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ),
               child: Text(
                 'Set',
-                style: GoogleFonts.notoSansKr(color: Colors.white),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -1515,7 +1514,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         // Default Sizes
         Text(
           'Default Sizes',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondaryColor,
@@ -1549,7 +1548,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 ),
                 child: Text(
                   size,
-                  style: GoogleFonts.notoSansKr(
+                  style: TextStyle(
                     color: isSelected ? Colors.white : AppColors.textAppBlack,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1565,7 +1564,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         if (formData.selectedSizes.isNotEmpty) ...[
           Text(
             'Selected Sizes',
-            style: GoogleFonts.notoSansKr(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondaryColor,
@@ -1591,7 +1590,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   children: [
                     Text(
                       size,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         color: AppColors.primaryLaurel,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1655,7 +1654,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   children: [
                     Text(
                       color.name,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         color:
                             color.color == Colors.white ||
                                 color.color == Colors.yellow
@@ -1697,7 +1696,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         // Custom Color Input
         Text(
           'Write product Color Code',
-          style: GoogleFonts.notoSansKr(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textAppBlack,
@@ -1709,10 +1708,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             Expanded(
               child: TextFormField(
                 controller: _colorNameController,
-                style: GoogleFonts.notoSansKr(),
+                style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter a color code...',
-                  hintStyle: GoogleFonts.notoSansKr(
+                  hintStyle: TextStyle(
                     color: AppColors.textSecondaryHintColor,
                   ),
                   border: OutlineInputBorder(
@@ -1752,7 +1751,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ),
               child: Text(
                 'Set',
-                style: GoogleFonts.notoSansKr(color: Colors.white),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -1764,7 +1763,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         if (formData.selectedColors.isNotEmpty) ...[
           Text(
             'Selected Colors',
-            style: GoogleFonts.notoSansKr(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondaryColor,
@@ -1799,7 +1798,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     const SizedBox(width: 8),
                     Text(
                       productColor.name,
-                      style: GoogleFonts.notoSansKr(
+                      style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: AppColors.textAppBlack,
                       ),
@@ -1848,7 +1847,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ),
             child: Text(
               'Cancel',
-              style: GoogleFonts.notoSansKr(
+              style: TextStyle(
                 color: AppColors.textSecondaryColor,
               ),
             ),
@@ -1876,7 +1875,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   )
                 : Text(
                     'Update',
-                    style: GoogleFonts.notoSansKr(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),

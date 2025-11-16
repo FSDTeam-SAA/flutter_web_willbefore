@@ -96,7 +96,6 @@ class CategoriesProvider extends StateNotifier<CategoriesState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final categories = await _getCategoriesUseCase.call();
-      DPrint.log("Product Category : $categories");
       state = state.copyWith(categories: categories, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
