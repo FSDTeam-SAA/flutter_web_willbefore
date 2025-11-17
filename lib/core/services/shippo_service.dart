@@ -4,7 +4,8 @@ import 'package:flutx_core/flutx_core.dart';
 
 class AdminShippoService {
   static const String baseUrl = 'https://api.goshippo.com';
-  static const String apiToken = 'shippo_test_763c1b35dfa914e4695ebd890a960256bf0345d4';
+  static const String apiToken =
+      'shippo_test_763c1b35dfa914e4695ebd890a960256bf0345d4';
 
   final headers = {
     'Authorization': 'ShippoToken $apiToken',
@@ -62,7 +63,7 @@ class AdminShippoService {
     required double height,
     required String distanceUnit, // 'in', 'cm'
     required double weight,
-    required String massUnit,     // 'lb', 'oz', 'g', 'kg'
+    required String massUnit, // 'lb', 'oz', 'g', 'kg'
   }) async {
     final url = Uri.parse('$baseUrl/parcels/');
     final body = jsonEncode({

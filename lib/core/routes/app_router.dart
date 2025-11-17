@@ -133,11 +133,11 @@ class AppRouter {
             name: 'profile',
             builder: (context, state) => const AllUserProfileScreen(),
           ),
-          // GoRoute(
-          //   path: '/settings',
-          //   name: 'settings',
-          //   builder: (context, state) => const AdminSettingScreen(),
-          // ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const AdminSettingScreen(),
+          ),
         ],
       ),
     ],

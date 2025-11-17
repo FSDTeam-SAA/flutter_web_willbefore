@@ -311,8 +311,8 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
       onTap: () {
         context.goNamed(RouteEndpoint.ordersDetails, extra: order);
         // Inside _buildOrderRow → after status chip
-        DPrint.info("Product status : ${order.status}");
-        DPrint.info("Product status 2 : ${OrderStatus.confirmed}");
+        // DPrint.info("Product status : ${order.status}");
+        // DPrint.info("Product status 2 : ${OrderStatus.confirmed}");
         // if (order.status == OrderStatus.confirmed) {
         //   Padding(
         //     padding: const EdgeInsets.only(left: 8),
