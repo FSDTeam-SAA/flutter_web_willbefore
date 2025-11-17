@@ -44,7 +44,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   Future<void> _generateLabel() async {
     sendShipmentNotification(
       fcmToken:
-          "fKZ03c-sSBSmT3C3h-eUGP:APA91bEidF7en72cXR6N_iqcdLIlBQkdeo4hBf_pff-cCY34lVCWkZvc1OBeyIRiRloeY692GmOkYMeQllEz2dBH7EOXYpxa6MIQCzcIntK5E8A0Ormzps0",
+          "d-LkHO-TSS2V6fE-qlY-MC:APA91bGuWAWYNPo9Jd4EuSxNLkRLtIryTZVWoZbUA7gS19Lbdglo_P_8HLL14idjAPdK3qvrmBv55wc7fTdfq6MLoF3pi4GgEWGoI18j7bsOalAN8uhVpkU",
       orderId: "233",
     );
 

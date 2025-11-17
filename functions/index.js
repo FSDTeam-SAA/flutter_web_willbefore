@@ -17,21 +17,30 @@ setGlobalOptions({maxInstances: 10});
 /**
  * Start Shipment Notification Function
  */
-exports.startShipment = functions.https.onCall((data, context) => {
+exports.startShipment = functions.https.onCall(async (data, context) => {
   const fcmToken = data.fcmToken;
   const orderId = data.orderId;
 
-  console.log("JS : ", orderId);
+  if (!fcmToken || !orderId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Missing data');
+  }
 
-  return admin.messaging().send({
-    token: fcmToken,
-    notification: {
-      title: "Shipment Started 🚚",
-      body: `Your order #${orderId} is on the way.`,
-    },
-    data: {
-      orderId: String(orderId),
-      type: "shipment_start",
-    },
-  });
+  try {
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: {
+        title: "Shipment Started 🚚",
+        body: `Your order #${orderId} is on the way.`,
+      },
+      data: {
+        orderId: String(orderId),
+        type: "shipment_start",
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    functions.logger.error("FCM send failed", error, { fcmToken, orderId });
+    throw new functions.https.HttpsError('internal', 'Failed to send notification');
+  }
 });

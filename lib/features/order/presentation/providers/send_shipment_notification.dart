@@ -5,11 +5,18 @@ Future<void> sendShipmentNotification({
   required String fcmToken,
   required String orderId,
 }) async {
-  final callable = FirebaseFunctions.instance.httpsCallable("startShipment");
+  final callable = FirebaseFunctions.instance.httpsCallable(
+    "startShipment",
+    options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+  );
 
-  DPrint.log("Sended Push notification");
-
-  await callable.call({"fcmToken": fcmToken, "orderId": orderId});
+  try {
+    await callable.call({"fcmToken": fcmToken, "orderId": orderId});
+    DPrint.log("Push notification sent successfully");
+  } catch (e) {
+    DPrint.error("Failed to send shipment notification: $e");
+    // Don't rethrow if you don't want to break label generation
+  }
 }
 
 
