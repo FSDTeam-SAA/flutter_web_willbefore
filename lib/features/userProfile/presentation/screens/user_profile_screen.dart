@@ -109,19 +109,34 @@ class _AllUserProfileScreenState extends ConsumerState<AllUserProfileScreen> {
                     ],
                   ),
                 ),
-                // ElevatedButton.icon(
-                //   onPressed: () => context.go('${RouteEndpoint.users}/add'),
-                //   icon: const Icon(Icons.add, color: Colors.white),
-                //   label: Text('Add User', style: TextStyle(color: Colors.white)),
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: AppColors.primaryLaurel,
-                //     padding: const EdgeInsets.symmetric(
-                //       horizontal: 20,
-                //       vertical: 12,
-                //     ),
-                //   ),
-                // ),
               ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Add User Button - Beautiful & Prominent
+          Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton.icon(
+              onPressed: () => _showCreateUserDialog(context),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text(
+                'Add New User',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryLaurel,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                shadowColor: AppColors.primaryLaurel.withOpacity(0.4),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -465,6 +480,122 @@ class _AllUserProfileScreenState extends ConsumerState<AllUserProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCreateUserDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Create New User'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter an email';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryLaurel,
+              ),
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setStateDialog(() => isLoading = true);
+
+                      final success = await ref
+                          .read(userProvider.notifier)
+                          .createUser(
+                            name: nameController.text.trim(),
+                            email: emailController.text.trim(),
+                          );
+
+                      if (!dialogContext.mounted) return;
+
+                      if (success) {
+                        Navigator.of(dialogContext).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('User created successfully!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      } else {
+                        setStateDialog(() => isLoading = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to create user. Try again.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Create', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }

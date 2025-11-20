@@ -2,15 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
-import 'package:flutter_web_willbefore/features/order/presentation/providers/send_shipment_notification.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutx_core/flutx_core.dart';
 
 import '../../../../core/services/shippo_service.dart';
-import '../../../setting/domain/models/warehouse_address.dart';
 import '../../../setting/presentation/provider/warehouse_provider.dart';
 import '../../domain/entities/order_entities.dart';
 import '../providers/order_provider.dart';
+import '../providers/send_shipment_notification.dart';
 
 class FullfillOrderScreen extends ConsumerStatefulWidget {
   final Order order;
@@ -42,11 +41,10 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   //  Generate label
   // --------------------------------------------------------------
   Future<void> _generateLabel() async {
-    sendShipmentNotification(
-      fcmToken:
-          "d-LkHO-TSS2V6fE-qlY-MC:APA91bGuWAWYNPo9Jd4EuSxNLkRLtIryTZVWoZbUA7gS19Lbdglo_P_8HLL14idjAPdK3qvrmBv55wc7fTdfq6MLoF3pi4GgEWGoI18j7bsOalAN8uhVpkU",
-      orderId: "233",
-    );
+    final userId = widget.order.userId;
+    final orderId = widget.order.id;
+
+    sendShipmentNotification(userId: userId, orderId: orderId);
 
     setState(() {
       _isLoading = true;
@@ -108,7 +106,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
       // ---- 4. Parcel -------------------------------------------------------------
       final totalWeightOz = widget.order.items.fold<double>(
         0,
-        (sum, item) => sum + (item.product.weightOz ?? 0) * item.quantity,
+        (sum, item) => sum + (item.product.weightOz) * item.quantity,
       );
 
       final parcelId = await _shippo.createParcel(

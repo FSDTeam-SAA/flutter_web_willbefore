@@ -1,3 +1,5 @@
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,16 +11,20 @@ import 'package:url_strategy/url_strategy.dart';
 import 'core/routes/route_endpoint.dart';
 import 'firebase_options.dart';
 
+final FirebaseFunctions functions = FirebaseFunctions.instance;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
 
   final config = await rootBundle.loadString(
     'assets/config/stripe_config.json',
   );
+
   Stripe.publishableKey = config;
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+
+  functions.useFunctionsEmulator('localhost', 5001);
 
   setPathUrlStrategy();
 

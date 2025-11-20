@@ -1,7 +1,12 @@
 // features/users/presentation/providers/user_provider.dart
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutx_core/flutx_core.dart';
+import 'package:http/http.dart' as http;
 import '../../../../core/base/base_state.dart';
 import '../../../order/data/models/user_model.dart';
 import '../../data/repository/user_profile_repository_impl.dart';
@@ -85,6 +90,85 @@ class UserProvider extends StateNotifier<AllUserState> {
         );
       },
     );
+  }
+
+  Future<void> makeMeAdminWithToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("Not logged in");
+      return;
+    }
+
+    final idToken = await user.getIdToken(); // this forces a fresh token
+
+    DPrint.log("user token $idToken");
+
+    final response = await http.post(
+      Uri.parse('http://localhost:5001/smilestreats/us-central1/makeMeAdmin'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken', // this line sends the token
+      },
+      body: jsonEncode({}), // empty data
+    );
+
+    print("Response: ${response.body}");
+  }
+
+  Future<bool> createUser({required String name, required String email}) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      // makeMeAdminWithToken();
+
+      // await FirebaseFunctions.instance.httpsCallable('makeMeAdmin').call({
+      //   "token": await user!.getIdToken(),
+      // });
+      FirebaseFunctions.instance.httpsCallable("helloWorld");
+
+      // Get the callable function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+        'inviteUser',
+      );
+
+      // Call the function
+      final result = await callable.call({'email': email});
+
+      DPrint.log("inviteUser ${result.data['message']}");
+
+      // Success!
+      if (result.data['success'] == true) {
+        // Optionally show success message
+        state = state.copyWith(isLoading: false, errorMessage: null);
+
+        // Optional: Show snackbar or toast
+        // You can use a global messenger or ref.read some notifier
+
+        return true;
+      } else {
+        throw Exception("Invite failed");
+      }
+    } on FirebaseFunctionsException catch (e) {
+      String message = 'Failed to invite user';
+
+      if (e.code == 'permission-denied') {
+        message = 'Only admins can invite users';
+      } else if (e.code == 'invalid-argument') {
+        message = 'Invalid email address';
+      } else {
+        message = e.message ?? message;
+      }
+
+      state = state.copyWith(isLoading: false, errorMessage: message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Unexpected error: $e',
+      );
+      return false;
+    }
   }
 
   Future<bool> updateUserRole(String userId, String role) async {

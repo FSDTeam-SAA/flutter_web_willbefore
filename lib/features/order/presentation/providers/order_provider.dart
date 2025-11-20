@@ -102,40 +102,40 @@ class AdminOrderNotifier extends StateNotifier<AdminOrderState> {
   }
 
   // Inside AdminOrderNotifier
-Future<bool> fulfillOrder({
-  required String orderId,
-  required String trackingNumber,
-  required String labelUrl,
-  required String shippoTransactionId,
-}) async {
-  state = state.copyWith(isUpdating: true);
-  try {
-    // await _orderRepository.fulfillOrder(
-    //   orderId: orderId,
-    //   trackingNumber: trackingNumber,
-    //   labelUrl: labelUrl,
-    //   shippoTransactionId: shippoTransactionId,
-    // );
+  Future<bool> fulfillOrder({
+    required String orderId,
+    required String trackingNumber,
+    required String labelUrl,
+    required String shippoTransactionId,
+  }) async {
+    state = state.copyWith(isUpdating: true);
+    try {
+      // await _orderRepository.fulfillOrder(
+      //   orderId: orderId,
+      //   trackingNumber: trackingNumber,
+      //   labelUrl: labelUrl,
+      //   shippoTransactionId: shippoTransactionId,
+      // );
 
-    // final updatedOrders = state.orders.map((o) {
-    //   if (o.id == orderId) {
-    //     return o.copyWith(
-    //       status: OrderStatus.shipped,
-    //       trackingNumber: trackingNumber,
-    //       labelUrl: labelUrl,
-    //       shippoTransactionId: shippoTransactionId,
-    //     );
-    //   }
-    //   return o;
-    // }).toList();
+      // final updatedOrders = state.orders.map((o) {
+      //   if (o.id == orderId) {
+      //     return o.copyWith(
+      //       status: OrderStatus.shipped,
+      //       trackingNumber: trackingNumber,
+      //       labelUrl: labelUrl,
+      //       shippoTransactionId: shippoTransactionId,
+      //     );
+      //   }
+      //   return o;
+      // }).toList();
 
-    // state = state.copyWith(orders: updatedOrders, isUpdating: false);
-    return true;
-  } catch (e) {
-    state = state.copyWith(isUpdating: false, errorMessage: e.toString());
-    return false;
+      // state = state.copyWith(orders: updatedOrders, isUpdating: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isUpdating: false, errorMessage: e.toString());
+      return false;
+    }
   }
-}
 
   void clearError() {
     state = state.copyWith(errorMessage: null);
