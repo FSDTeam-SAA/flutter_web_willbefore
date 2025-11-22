@@ -34,6 +34,12 @@ Future<void> sendShipmentNotification({
   try {
     await callable.call({"fcmToken": fcmToken, "orderId": orderId});
     DPrint.log("Push notification sent successfully");
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+
+        
   } catch (e) {
     DPrint.error("Failed to send shipment notification: $e");
     // Don't rethrow if you don't want to break label generation

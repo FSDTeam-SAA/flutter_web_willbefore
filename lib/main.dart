@@ -24,7 +24,7 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
 
-  functions.useFunctionsEmulator('localhost', 5001);
+  // functions.useFunctionsEmulator('localhost', 5001);
 
   setPathUrlStrategy();
 

@@ -1,0 +1,20 @@
+// exports.makeMeAdmin = onCall(async (data, context) => {
+// //   console.log("Data : ", data);
+//   console.log("Full context object:", context);
+//   console.log("context.auth:", data.auth.uid);
+//   console.log("context.auth?.uid:", context.auth?.uid);
+//   // 1. First check if user is logged in at all
+//   if (!data.auth || !data.auth.uid) {
+//     throw new HttpsError("unauthenticated", "You must be logged in.");
+//   }
+
+//   // 2. Now safely compare the UID
+//   if (data.auth.uid !== "6w2x5GLzsMcb46DQAjA61ig07Pv2") {
+//     throw new HttpsError("permission-denied", "Nope – wrong user.");
+//   }
+
+//   // 3. Set admin claim
+//   await admin.auth().setCustomUserClaims(data.auth.uid, { admin: true });
+
+//   return { message: "You are now admin! Please sign out and sign in again." };
+// });
