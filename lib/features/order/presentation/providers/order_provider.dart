@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutx_core/flutx_core.dart';
 
@@ -136,6 +137,24 @@ class AdminOrderNotifier extends StateNotifier<AdminOrderState> {
       return false;
     }
   }
+
+  // Future<bool> refundOrder(String paymentIntentId, {int? amountInCents}) async {
+  //   try {
+  //     final result = await FirebaseFunctions.instance
+  //         .httpsCallable('refundOrder')
+  //         .call({
+  //           'paymentIntentId': paymentIntentId,
+  //           if (amountInCents != null) 'amount': amountInCents,
+  //           'reason': 'requested_by_customer',
+  //         });
+
+  //     DPrint.log("Refund result: ${result.data}");
+
+  //     return true;
+  //   } catch (e) {
+  //     return false;
+  //   }
+  // }
 
   void clearError() {
     state = state.copyWith(errorMessage: null);

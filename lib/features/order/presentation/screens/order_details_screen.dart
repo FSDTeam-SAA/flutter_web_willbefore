@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseFirestore;
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
+import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -55,10 +58,229 @@ class OrderDetailsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             // _buildStatusUpdateSection(context, ref),
             _buildFulfillButton(context),
+            const SizedBox(height: 24),
+            _buildActionButtons(context, ref, user),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref, User user) {
+    final bool canFulfill = order.status == OrderStatus.confirmed;
+    final bool canRefund = [
+      OrderStatus.pending,
+      OrderStatus.cancelled,
+    ].contains(order.status);
+
+    DPrint.log('Order Status: ${!canRefund}');
+
+    if (!canFulfill && !canRefund) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        // === Fulfill Order Button ===
+        if (canFulfill)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.goNamed(RouteEndpoint.fullfillOrder, extra: order);
+                },
+                icon: const Icon(Icons.local_shipping, color: Colors.white),
+                label: const Text('Fulfill Order'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryLaurel,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // === Refund Order Button (NEW) ===
+        if (canRefund)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () =>
+                  _showRefundConfirmationDialog(context, ref, user),
+              icon: Icon(Icons.dangerous, color: Colors.red),
+              label: Text(
+                order.status == OrderStatus.confirmed
+                    ? 'Issue Refund (Post-Delivery)'
+                    : 'Refund Order',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.red, width: 2),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showRefundConfirmationDialog(
+    BuildContext context,
+    WidgetRef ref,
+    User user,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Confirm Refund'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 56,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This will issue a FULL refund of \$${order.total.toStringAsFixed(2)} to the customer.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Order #${order.id.substring(0, 8)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx); // close dialog
+              _processRefund(context, ref, user);
+            },
+            child: const Text(
+              'Yes, Refund',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _processRefund(
+    BuildContext context,
+    WidgetRef ref,
+    User user,
+  ) async {
+    // Show loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Processing refund...'),
+        duration: Duration(seconds: 10),
+      ),
+    );
+
+    try {
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('refundOrder')
+          .call({
+            'paymentIntentId': order.paymentIntentId,
+            // 'paymentIntentId': "pi_3SU1y32IE5e3lR4S1qATTF7D",
+            /// 'amount': (order.total * 100).toInt(),  Uncomment for [partial refund]
+            'reason': 'requested_by_customer',
+          });
+
+      if (result.data['success'] == true) {
+        // Optional: Update order status to cancelled
+        await ref
+            .read(adminOrderProvider.notifier)
+            .updateOrderStatus(order.id, OrderStatus.cancelled);
+
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(order.userId)
+            .get();
+
+        final fcmToken = userDoc.data()?['fcmToken'] as String?;
+
+        if (fcmToken != null && fcmToken.isNotEmpty) {
+          try {
+            await FirebaseFunctions.instance
+                .httpsCallable('sendRefundNotification')
+                .call({
+                  'fcmToken': fcmToken,
+                  'orderId': order.id,
+                  'customerName': user.name ?? order.shippingAddress.fullName,
+                  'totalAmount': order.total.toStringAsFixed(2),
+                });
+            DPrint.log("Refund notification sent successfully");
+          } catch (e) {
+            DPrint.error("Failed to send refund notification: $e");
+            // Don't fail the whole refund if notification fails
+          }
+        } else {
+          DPrint.log(
+            "No FCM token found for user ${order.userId}, skipping notification",
+          );
+        }
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Refund successful! Customer has been refunded.',
+              ),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: 'View',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Optional: Navigate to refund details
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Refund failed: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildOrderSummary() {

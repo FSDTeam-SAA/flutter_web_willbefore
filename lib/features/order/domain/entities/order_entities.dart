@@ -5,7 +5,8 @@ import '../../../product/domain/entrity/product.dart';
 enum OrderStatus {
   pending,
   confirmed,
-  cancelled;
+  cancelled,
+  shipped;
 
   /// Human-readable name (used in UI)
   String get displayName {
@@ -14,6 +15,8 @@ enum OrderStatus {
         return 'Pending';
       case OrderStatus.confirmed:
         return 'Confirmed';
+      case OrderStatus.shipped:
+        return 'Shipped';
       case OrderStatus.cancelled:
         return 'Cancelled';
     }
@@ -26,6 +29,8 @@ enum OrderStatus {
         return Colors.orange;
       case OrderStatus.confirmed:
         return Colors.green;
+      case OrderStatus.shipped:
+        return Colors.indigo;
       case OrderStatus.cancelled:
         return Colors.red;
     }
