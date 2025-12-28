@@ -1,6 +1,7 @@
 // features/warehouse/presentation/providers/warehouse_provider.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/models/warehouse_address.dart';
 
 class WarehouseState {

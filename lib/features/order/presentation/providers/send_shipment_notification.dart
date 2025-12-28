@@ -21,7 +21,7 @@ Future<void> sendShipmentNotification({
   final fcmToken =
       "f_8iGeB9xUVxsG83yd1FQV:APA91bE5CM1Oo04P6JtExoc3XMnbjwUKmYOqanAnFSzGrLgVOuo6W0PMfG0Hk_K_5593ganexCc0DjBV11ZxWNuP3PYWljx3Tot6WUqgGksuzvtR8qzoMEM";
 
-  if (fcmToken == null || fcmToken.isEmpty) {
+  if (fcmToken.isEmpty) {
     DPrint.warn("No FCM token found for user: $userId");
     return;
   }
@@ -34,10 +34,10 @@ Future<void> sendShipmentNotification({
   try {
     await callable.call({"fcmToken": fcmToken, "orderId": orderId});
     DPrint.log("Push notification sent successfully");
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .get();
+    // final userDoc = await FirebaseFirestore.instance
+    //     .collection('users')
+    //     .doc(userId)
+    //     .get();
 
         
   } catch (e) {

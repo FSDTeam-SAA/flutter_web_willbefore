@@ -100,7 +100,7 @@ class _EditCategoryDialogState extends ConsumerState<EditCategoryDialog> {
       final errorMessage = ref.read(categoriesProvider).errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage ?? 'Failed to update category'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
         ),
       );

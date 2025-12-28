@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutx_core/flutx_core.dart';
 
+import '../constants/shippo_key.dart';
+
 class AdminShippoService {
   static const String baseUrl = 'https://api.goshippo.com';
-  static const String apiToken =
-      'shippo_test_763c1b35dfa914e4695ebd890a960256bf0345d4';
+  static const String apiToken = shippoLiveKey;
 
   final headers = {
     'Authorization': 'ShippoToken $apiToken',

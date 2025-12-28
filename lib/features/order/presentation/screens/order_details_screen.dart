@@ -73,7 +73,7 @@ class OrderDetailsScreen extends ConsumerWidget {
       OrderStatus.cancelled,
     ].contains(order.status);
 
-    DPrint.log('Order Status: ${!canRefund}');
+    DPrint.log('Order Status: ${canRefund}');
 
     if (!canFulfill && !canRefund) return const SizedBox.shrink();
 
@@ -566,7 +566,7 @@ class OrderDetailsScreen extends ConsumerWidget {
   }
 
   Widget _buildFulfillButton(BuildContext context) {
-    if (order.status != OrderStatus.confirmed) return const SizedBox.shrink();
+    if (order.status != OrderStatus.pending) return const SizedBox.shrink();
 
     return Center(
       child: ElevatedButton.icon(

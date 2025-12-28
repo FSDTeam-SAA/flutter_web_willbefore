@@ -1,6 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
-import 'package:flutx_core/flutx_core.dart';
 
 import '../../data/repos/categories_repo_impl.dart';
 import '../../domain/models/category_model.dart';
