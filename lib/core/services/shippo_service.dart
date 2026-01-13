@@ -6,7 +6,7 @@ import '../constants/shippo_key.dart';
 
 class AdminShippoService {
   static const String baseUrl = 'https://api.goshippo.com';
-  static const String apiToken = shippoLiveKey;
+  static const String apiToken = shippoTestKey;
 
   final headers = {
     'Authorization': 'ShippoToken $apiToken',
@@ -14,7 +14,7 @@ class AdminShippoService {
   };
 
   // Re-use address creation (same as user)
-  Future<Map<String, dynamic>?> createAddress({
+  Future<Map<String, dynamic>> createAddress({
     required String name,
     String? company,
     required String street1,
@@ -49,16 +49,16 @@ class AdminShippoService {
         return jsonDecode(res.body);
       } else {
         DPrint.error('Address Error: ${res.statusCode} - ${res.body}');
-        return null;
+        throw Exception('Address Error: ${res.body}');
       }
     } catch (e) {
       DPrint.error('Address Exception: $e');
-      return null;
+      rethrow;
     }
   }
 
   // Create Parcel
-  Future<String?> createParcel({
+  Future<String> createParcel({
     required double length,
     required double width,
     required double height,
@@ -83,25 +83,100 @@ class AdminShippoService {
         return data['object_id'];
       } else {
         DPrint.error('Parcel Error: ${res.body}');
-        return null;
+        throw Exception('Parcel Error: ${res.body}');
       }
     } catch (e) {
       DPrint.error('Parcel Exception: $e');
-      return null;
+      rethrow;
+    }
+  }
+
+  // Create Customs Item
+  Future<String> createCustomsItem({
+    required String description,
+    required double quantity,
+    required double netWeight, // mass unit relative
+    required String massUnit, // 'lb', 'oz', 'g', 'kg'
+    required double valueAmount,
+    required String valueCurrency,
+    required String originCountry, // 'US'
+    String? tariffNumber,
+  }) async {
+    final url = Uri.parse('$baseUrl/customs/items/');
+    final body = jsonEncode({
+      'description': description,
+      'quantity': quantity.toInt(),
+      'net_weight': netWeight.toString(),
+      'mass_unit': massUnit,
+      'value_amount': valueAmount.toString(),
+      'value_currency': valueCurrency,
+      'origin_country': originCountry,
+      if (tariffNumber != null) 'tariff_number': tariffNumber,
+    });
+
+    try {
+      final res = await http.post(url, headers: headers, body: body);
+      if (res.statusCode == 201) {
+        final data = jsonDecode(res.body);
+        return data['object_id'];
+      } else {
+        DPrint.error('Customs Item Error: ${res.body}');
+        throw Exception('Customs Item Error: ${res.body}');
+      }
+    } catch (e) {
+      DPrint.error('Customs Item Exception: $e');
+      rethrow;
+    }
+  }
+
+  // Create Customs Declaration
+  Future<String> createCustomsDeclaration({
+    required List<String> customsItemIds,
+    required bool certify,
+    required String signer,
+    String type = 'MERCHANDISE',
+    String incoterm = 'DDU',
+    String eelPfc = 'NOEEI_30_37_a',
+  }) async {
+    final url = Uri.parse('$baseUrl/customs/declarations/');
+    final body = jsonEncode({
+      'items': customsItemIds,
+      'certify': certify,
+      'certify_signer': signer,
+      'type': type,
+      'incoterm': incoterm,
+      'eel_pfc': eelPfc,
+    });
+
+    try {
+      final res = await http.post(url, headers: headers, body: body);
+      if (res.statusCode == 201) {
+        final data = jsonDecode(res.body);
+        return data['object_id'];
+      } else {
+        DPrint.error('Customs Declaration Error: ${res.body}');
+        throw Exception('Customs Declaration Error: ${res.body}');
+      }
+    } catch (e) {
+      DPrint.error('Customs Declaration Exception: $e');
+      rethrow;
     }
   }
 
   // Create Shipment
-  Future<Map<String, dynamic>?> createShipment({
+  Future<Map<String, dynamic>> createShipment({
     required String addressFromId,
     required String addressToId,
     required List<String> parcelIds,
+    String? customsDeclarationId,
   }) async {
     final url = Uri.parse('$baseUrl/shipments/');
     final body = jsonEncode({
       'address_from': addressFromId,
       'address_to': addressToId,
       'parcels': parcelIds,
+      if (customsDeclarationId != null)
+        'customs_declaration': customsDeclarationId,
       'async': false,
     });
 
@@ -111,16 +186,16 @@ class AdminShippoService {
         return jsonDecode(res.body);
       } else {
         DPrint.error('Shipment Error: ${res.body}');
-        return null;
+        throw Exception('Shipment Error: ${res.body}');
       }
     } catch (e) {
       DPrint.error('Shipment Exception: $e');
-      return null;
+      rethrow;
     }
   }
 
   // Buy Label
-  Future<Map<String, dynamic>?> buyLabel(String rateId) async {
+  Future<Map<String, dynamic>> buyLabel(String rateId) async {
     final url = Uri.parse('$baseUrl/transactions/');
     final body = jsonEncode({
       'rate': rateId,
@@ -134,11 +209,11 @@ class AdminShippoService {
         return jsonDecode(res.body);
       } else {
         DPrint.error('Transaction Error: ${res.body}');
-        return null;
+        throw Exception('Transaction Error: ${res.body}');
       }
     } catch (e) {
       DPrint.error('Transaction Exception: $e');
-      return null;
+      rethrow;
     }
   }
 }

@@ -1,4 +1,4 @@
-// lib/feature/admin/presentation/screens/fulfill_order_screen.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
@@ -33,6 +33,15 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   // --------------------------------------------------------------
   bool _isValidAddress(Map<String, dynamic>? addr, {required bool isUS}) {
     if (addr == null) return false;
+
+    // Check modern validation results first
+    if (addr.containsKey('validation_results')) {
+      final validation = addr['validation_results'];
+      if (validation is Map && validation['is_valid'] == true) {
+        return true;
+      }
+    }
+
     if (isUS) return addr['object_state'] == 'VALID';
     return addr['object_id'] != null;
   }
@@ -80,7 +89,23 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       DPrint.log('FROM Address: $fromAddr');
       if (!_isValidAddress(fromAddr, isUS: isWarehouseUS)) {
-        final msg = fromAddr?['messages']?.join(', ') ?? 'Unknown error';
+        String msg;
+        try {
+          // Attempt to extract friendly messages
+          final messages = fromAddr['messages'] as List?;
+          if (messages != null && messages.isNotEmpty) {
+            msg = messages
+                .map(
+                  (m) => m is Map ? (m['text'] ?? m.toString()) : m.toString(),
+                )
+                .join(', ');
+          } else {
+            // If no messages but invalid, dump full JSON
+            msg = 'Full Response: ${jsonEncode(fromAddr)}';
+          }
+        } catch (_) {
+          msg = 'Response: $fromAddr';
+        }
         throw Exception('Warehouse address invalid: $msg');
       }
 
@@ -99,7 +124,21 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
       final bool isCustomerUS =
           widget.order.shippingAddress.country.toUpperCase() == 'US';
       if (!_isValidAddress(toAddr, isUS: isCustomerUS)) {
-        final msg = toAddr?['messages']?.join(', ') ?? 'Unknown error';
+        String msg;
+        try {
+          final messages = toAddr['messages'] as List?;
+          if (messages != null && messages.isNotEmpty) {
+            msg = messages
+                .map(
+                  (m) => m is Map ? (m['text'] ?? m.toString()) : m.toString(),
+                )
+                .join(', ');
+          } else {
+            msg = 'Full Response: ${jsonEncode(toAddr)}';
+          }
+        } catch (_) {
+          msg = 'Response: $toAddr';
+        }
         throw Exception('Customer address invalid: $msg');
       }
 
@@ -117,15 +156,42 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
         weight: totalWeightOz > 0 ? totalWeightOz : 8,
         massUnit: 'oz',
       );
-      if (parcelId == null) throw Exception('Failed to create parcel');
+      // Removed null check as createParcel throws on error
+
+      // ---- 4.5 Customs Declaration (International) -------------------------------
+      String? customsDeclarationId;
+      final bool isDomesticUS = isWarehouseUS && isCustomerUS;
+
+      if (!isDomesticUS) {
+        final List<String> customsItemIds = [];
+        for (final item in widget.order.items) {
+          final itemId = await _shippo.createCustomsItem(
+            description: item.product.title, // using title from Product entity
+            quantity: item.quantity.toDouble(),
+            netWeight: item.product.weightOz > 0 ? item.product.weightOz : 1.0,
+            massUnit: 'oz',
+            valueAmount: item.product.effectivePrice,
+            valueCurrency: 'USD',
+            originCountry: warehouse.country ?? 'US',
+          );
+          customsItemIds.add(itemId);
+        }
+
+        customsDeclarationId = await _shippo.createCustomsDeclaration(
+          customsItemIds: customsItemIds,
+          certify: true,
+          signer: warehouse.name ?? 'Sender',
+        );
+      }
 
       // ---- 5. Shipment -----------------------------------------------------------
       final shipment = await _shippo.createShipment(
-        addressFromId: fromAddr!['object_id'] as String,
-        addressToId: toAddr!['object_id'] as String,
+        addressFromId: fromAddr['object_id'] as String,
+        addressToId: toAddr['object_id'] as String,
         parcelIds: [parcelId],
+        customsDeclarationId: customsDeclarationId,
       );
-      if (shipment == null) throw Exception('Failed to create shipment');
+      // Removed null check as createShipment throws on error
 
       // ---- 6. Rate selection -----------------------------------------------------
       final rates = shipment['rates'] as List;
@@ -133,7 +199,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
         throw Exception('No shipping rates returned by Shippo');
       }
 
-      final bool isDomesticUS = isWarehouseUS && isCustomerUS;
+      // reused isDomesticUS from above
 
       Map<String, dynamic> selectedRate;
 
@@ -166,7 +232,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       // ---- 7. Buy label ---------------------------------------------------------
       final transaction = await _shippo.buyLabel(selectedRate['object_id']);
-      if (transaction == null) throw Exception('Failed to purchase label');
+      // Removed null check as buyLabel throws on error
 
       // ---- 8. Update order -------------------------------------------------------
       final success = await ref
