@@ -164,89 +164,6 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     }
   }
 
-  void _setupControllerListeners() {
-    // Listen to form state changes and update controllers
-    ref.listen<EditProductFormData>(editProductFormProvider(widget.productId), (
-      previous,
-      next,
-    ) {
-      if (previous?.title != next.title &&
-          _titleController.text != next.title) {
-        _titleController.text = next.title;
-      }
-      if (previous?.actualPrice != next.actualPrice &&
-          _actualPriceController.text != next.actualPrice) {
-        _actualPriceController.text = next.actualPrice;
-      }
-      if (previous?.discountPrice != next.discountPrice &&
-          _discountPriceController.text != next.discountPrice) {
-        _discountPriceController.text = next.discountPrice;
-      }
-      if (previous?.stock != next.stock &&
-          _stockController.text != next.stock) {
-        _stockController.text = next.stock;
-      }
-      if (previous?.customSize != next.customSize &&
-          _sizeController.text != next.customSize) {
-        _sizeController.text = next.customSize;
-      }
-      if (previous?.customColorName != next.customColorName &&
-          _colorNameController.text != next.customColorName) {
-        _colorNameController.text = next.customColorName;
-      }
-      if (previous?.overOrderDiscount != next.overOrderDiscount &&
-          _overOrderDiscountController.text != next.overOrderDiscount) {
-        _overOrderDiscountController.text = next.overOrderDiscount;
-      }
-      if (previous?.freeReturnDays != next.freeReturnDays &&
-          _freeReturnDaysController.text != next.freeReturnDays) {
-        _freeReturnDaysController.text = next.freeReturnDays;
-      }
-    });
-
-    // Add listeners to controllers
-    _titleController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateTitle(_titleController.text);
-    });
-    _actualPriceController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateActualPrice(_actualPriceController.text);
-    });
-    _discountPriceController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateDiscountPrice(_discountPriceController.text);
-    });
-    _stockController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateStock(_stockController.text);
-    });
-    _sizeController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateCustomSize(_sizeController.text);
-    });
-    _colorNameController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateCustomColorName(_colorNameController.text);
-    });
-    _overOrderDiscountController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateOverOrderDiscount(_overOrderDiscountController.text);
-    });
-    _freeReturnDaysController.addListener(() {
-      ref
-          .read(editProductFormProvider(widget.productId).notifier)
-          .updateFreeReturnDays(_freeReturnDaysController.text);
-    });
-  }
-
   @override
   void dispose() {
     _titleController.dispose();
@@ -366,10 +283,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryLaurel,
             ),
-            child: Text(
-              'Set Color',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: Text('Set Color', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -462,27 +376,45 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       );
     }
 
-    final productsState = ref.watch(productsProvider);
-    final categoriesState = ref.watch(categoriesProvider);
-    final promosState = ref.watch(promosProvider);
-    final formData = ref.watch(editProductFormProvider(widget.productId));
+    ref.listen<EditProductFormData>(editProductFormProvider(widget.productId), (
+      previous,
+      next,
+    ) {
+      if (previous?.title != next.title &&
+          _titleController.text != next.title) {
+        _titleController.text = next.title;
+      }
+      if (previous?.actualPrice != next.actualPrice &&
+          _actualPriceController.text != next.actualPrice) {
+        _actualPriceController.text = next.actualPrice;
+      }
+      if (previous?.discountPrice != next.discountPrice &&
+          _discountPriceController.text != next.discountPrice) {
+        _discountPriceController.text = next.discountPrice;
+      }
+      if (previous?.stock != next.stock &&
+          _stockController.text != next.stock) {
+        _stockController.text = next.stock;
+      }
+      if (previous?.customSize != next.customSize &&
+          _sizeController.text != next.customSize) {
+        _sizeController.text = next.customSize;
+      }
+      if (previous?.customColorName != next.customColorName &&
+          _colorNameController.text != next.customColorName) {
+        _colorNameController.text = next.customColorName;
+      }
+      if (previous?.overOrderDiscount != next.overOrderDiscount &&
+          _overOrderDiscountController.text != next.overOrderDiscount) {
+        _overOrderDiscountController.text = next.overOrderDiscount;
+      }
+      if (previous?.freeReturnDays != next.freeReturnDays &&
+          _freeReturnDaysController.text != next.freeReturnDays) {
+        _freeReturnDaysController.text = next.freeReturnDays;
+      }
+    });
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(
-      //     'Edit Product',
-      //     style: TextStyle(
-      //       fontWeight: FontWeight.w600,
-      //       color: AppColors.textAppBlack,
-      //     ),
-      //   ),
-      //   backgroundColor: Colors.white,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back, color: AppColors.textAppBlack),
-      //     onPressed: () => context.go(RouteEndpoint.products),
-      //   ),
-      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -566,9 +498,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           style: TextStyle(),
           decoration: InputDecoration(
             hintText: 'Edit your title...',
-            hintStyle: TextStyle(
-              color: AppColors.textSecondaryHintColor,
-            ),
+            hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.borderColor),
@@ -669,9 +599,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           decoration: InputDecoration(
             hintText:
                 'Edit product ${label.toLowerCase().replaceAll('_', ' ')}...',
-            hintStyle: TextStyle(
-              color: AppColors.textSecondaryHintColor,
-            ),
+            hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.borderColor),
@@ -800,9 +728,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
-              hintStyle: TextStyle(
-                color: AppColors.textSecondaryHintColor,
-              ),
+              hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: AppColors.borderColor),
@@ -886,18 +812,18 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             initialValue: formData.selectedPromoId,
             style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
-              hintText: promosState.activePromos.isEmpty
-                  ? 'No active promos available'
+              hintText: promosState.promos.isEmpty
+                  ? 'No selectable promos available'
                   : 'Select a promo',
               hintStyle: TextStyle(
-                color: promosState.activePromos.isEmpty
+                color: promosState.promos.isEmpty
                     ? Colors.orange
                     : AppColors.textSecondaryHintColor,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty
+                  color: promosState.promos.isEmpty
                       ? Colors.orange
                       : AppColors.borderColor,
                 ),
@@ -905,7 +831,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty
+                  color: promosState.promos.isEmpty
                       ? Colors.orange
                       : AppColors.borderColor,
                 ),
@@ -923,13 +849,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ),
             ),
             items: [
-              DropdownMenuItem<String>(
+              const DropdownMenuItem<String>(
                 value: null,
                 child: Text('No promo', style: TextStyle()),
               ),
-              ...promosState.activePromos.map<DropdownMenuItem<String>>((
-                promo,
-              ) {
+              ...promosState.promos.map<DropdownMenuItem<String>>((promo) {
                 return DropdownMenuItem<String>(
                   value: promo.id,
                   child: Text(
@@ -1012,10 +936,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               child: ElevatedButton.icon(
                 onPressed: _openHtmlEditorDialog,
                 icon: const Icon(Icons.edit, size: 16),
-                label: Text(
-                  'Edit Description',
-                  style: TextStyle(fontSize: 14),
-                ),
+                label: Text('Edit Description', style: TextStyle(fontSize: 14)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryLaurel,
                   foregroundColor: Colors.white,
@@ -1036,10 +957,6 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   Future<void> _openHtmlEditorDialog() async {
-    final currentText = ref
-        .read(editProductFormProvider(widget.productId))
-        .description;
-
     // Start with a clean editor
     _htmlController.clear();
 
@@ -1429,10 +1346,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         const SizedBox(height: 8),
         Text(
           '$totalImages/${EditProductFormNotifier.maxImages} images selected',
-          style: TextStyle(
-            color: AppColors.textSecondaryColor,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: AppColors.textSecondaryColor, fontSize: 12),
         ),
       ],
     );
@@ -1463,9 +1377,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter product size...',
-                  hintStyle: TextStyle(
-                    color: AppColors.textSecondaryHintColor,
-                  ),
+                  hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.borderColor),
@@ -1502,10 +1414,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   vertical: 12,
                 ),
               ),
-              child: Text(
-                'Set',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text('Set', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1712,9 +1621,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 style: TextStyle(),
                 decoration: InputDecoration(
                   hintText: 'Enter a color code...',
-                  hintStyle: TextStyle(
-                    color: AppColors.textSecondaryHintColor,
-                  ),
+                  hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.borderColor),
@@ -1750,10 +1657,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   vertical: 12,
                 ),
               ),
-              child: Text(
-                'Set',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text('Set', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -1848,9 +1752,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             ),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                color: AppColors.textSecondaryColor,
-              ),
+              style: TextStyle(color: AppColors.textSecondaryColor),
             ),
           ),
         ),

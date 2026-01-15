@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
-import 'package:flutx_core/flutx_core.dart';
-
 import '../../data/repos/promos_repository_impl.dart';
 import '../../domain/models/promo_model.dart';
 import '../../domain/requests/create_promo_request.dart';
@@ -20,7 +18,7 @@ class PromosState extends BaseState {
   final bool isDeleting;
 
   const PromosState({
-    super.isLoading = false,
+    super.isLoading = true,
     super.errorMessage,
     this.promos = const [],
     this.activePromos = const [],
@@ -90,13 +88,19 @@ class PromosProvider extends StateNotifier<PromosState> {
   void _listenToPromos() {
     _getPromosUseCase.stream().listen(
       (promos) {
+        // activePromos for CUSTOMER (must be currently active)
         final activePromos = promos
             .where((promo) => promo.isCurrentlyActive)
             .toList();
 
-        DPrint.log("Promo codes 2 : $activePromos");
+        // promos for ADMIN (can include future promos, just not expired ones)
+        final selectablePromosForAdmin = promos
+            .where((promo) => promo.isActive && !promo.isExpired)
+            .toList();
+
         state = state.copyWith(
-          promos: promos,
+          promos:
+              selectablePromosForAdmin, // Use this for dropdowns in admin screens
           activePromos: activePromos,
           isLoading: false,
         );

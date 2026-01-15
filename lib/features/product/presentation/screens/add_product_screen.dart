@@ -55,43 +55,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     // Initialize HTML Editor Controller
     _htmlController = HtmlEditorController();
 
-    // Listen to form state changes and update controllers
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen<ProductFormData>(addProductFormProvider, (previous, next) {
-        if (previous?.title != next.title &&
-            _titleController.text != next.title) {
-          _titleController.text = next.title;
-        }
-        if (previous?.actualPrice != next.actualPrice &&
-            _actualPriceController.text != next.actualPrice) {
-          _actualPriceController.text = next.actualPrice;
-        }
-        if (previous?.discountPrice != next.discountPrice &&
-            _discountPriceController.text != next.discountPrice) {
-          _discountPriceController.text = next.discountPrice;
-        }
-        if (previous?.stock != next.stock &&
-            _stockController.text != next.stock) {
-          _stockController.text = next.stock;
-        }
-        if (previous?.customSize != next.customSize &&
-            _sizeController.text != next.customSize) {
-          _sizeController.text = next.customSize;
-        }
-        if (previous?.customColorName != next.customColorName &&
-            _colorNameController.text != next.customColorName) {
-          _colorNameController.text = next.customColorName;
-        }
-        if (previous?.overOrderDiscount != next.overOrderDiscount &&
-            _overOrderDiscountController.text != next.overOrderDiscount) {
-          _overOrderDiscountController.text = next.overOrderDiscount;
-        }
-        if (previous?.freeReturnDays != next.freeReturnDays &&
-            _freeReturnDaysController.text != next.freeReturnDays) {
-          _freeReturnDaysController.text = next.freeReturnDays;
-        }
-      });
-    });
+    // Listeners are added to controllers below
 
     // Add listeners to controllers
     _titleController.addListener(() {
@@ -333,10 +297,40 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productsState = ref.watch(productsProvider);
-    final categoriesState = ref.watch(categoriesProvider);
-    final promosState = ref.watch(promosProvider);
-    final formData = ref.watch(addProductFormProvider);
+    ref.listen<ProductFormData>(addProductFormProvider, (previous, next) {
+      if (previous?.title != next.title &&
+          _titleController.text != next.title) {
+        _titleController.text = next.title;
+      }
+      if (previous?.actualPrice != next.actualPrice &&
+          _actualPriceController.text != next.actualPrice) {
+        _actualPriceController.text = next.actualPrice;
+      }
+      if (previous?.discountPrice != next.discountPrice &&
+          _discountPriceController.text != next.discountPrice) {
+        _discountPriceController.text = next.discountPrice;
+      }
+      if (previous?.stock != next.stock &&
+          _stockController.text != next.stock) {
+        _stockController.text = next.stock;
+      }
+      if (previous?.customSize != next.customSize &&
+          _sizeController.text != next.customSize) {
+        _sizeController.text = next.customSize;
+      }
+      if (previous?.customColorName != next.customColorName &&
+          _colorNameController.text != next.customColorName) {
+        _colorNameController.text = next.customColorName;
+      }
+      if (previous?.overOrderDiscount != next.overOrderDiscount &&
+          _overOrderDiscountController.text != next.overOrderDiscount) {
+        _overOrderDiscountController.text = next.overOrderDiscount;
+      }
+      if (previous?.freeReturnDays != next.freeReturnDays &&
+          _freeReturnDaysController.text != next.freeReturnDays) {
+        _freeReturnDaysController.text = next.freeReturnDays;
+      }
+    });
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -737,18 +731,18 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             initialValue: formData.selectedPromoId,
             style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
-              hintText: promosState.activePromos.isEmpty
-                  ? 'No active promos available'
+              hintText: promosState.promos.isEmpty
+                  ? 'No selectable promos available'
                   : 'Select a promo',
               hintStyle: TextStyle(
-                color: promosState.activePromos.isEmpty
+                color: promosState.promos.isEmpty
                     ? Colors.orange
                     : AppColors.textSecondaryHintColor,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty
+                  color: promosState.promos.isEmpty
                       ? Colors.orange
                       : AppColors.borderColor,
                 ),
@@ -756,7 +750,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color: promosState.activePromos.isEmpty
+                  color: promosState.promos.isEmpty
                       ? Colors.orange
                       : AppColors.borderColor,
                 ),
@@ -774,13 +768,11 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               ),
             ),
             items: [
-              DropdownMenuItem<String>(
+              const DropdownMenuItem<String>(
                 value: null,
-                child: Text('Select a promo', style: TextStyle()),
+                child: Text('No promo', style: TextStyle()),
               ),
-              ...promosState.activePromos.map<DropdownMenuItem<String>>((
-                promo,
-              ) {
+              ...promosState.promos.map<DropdownMenuItem<String>>((promo) {
                 return DropdownMenuItem<String>(
                   value: promo.id,
                   child: Text(
@@ -973,7 +965,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       onChangeContent: (data) {
                         DPrint.log("Http Data : $data");
                       },
-                      
                     ),
                     htmlEditorOptions: HtmlEditorOptions(
                       hint: "Type your product description here...",

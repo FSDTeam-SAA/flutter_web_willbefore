@@ -36,7 +36,6 @@ class _AdminSettingScreenState extends ConsumerState<AdminSettingScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final user = authState.user;
 
     return AppScaffold(
       appBar: AppBar(title: const Text('Admin Settings')),
@@ -179,29 +178,6 @@ class _AdminSettingScreenState extends ConsumerState<AdminSettingScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _AdminMenuItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const _AdminMenuItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.black),
-      title: Text(title, style: TextStyle(color: AppColors.textAppBlack)),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
     );
   }
 }

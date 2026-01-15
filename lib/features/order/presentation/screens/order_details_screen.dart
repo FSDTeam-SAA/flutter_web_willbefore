@@ -121,29 +121,29 @@ class OrderDetailsScreen extends ConsumerWidget {
             ),
           ),
 
-        // === Refund Order Button (NEW) ===
+        // === Cancel Order Button ===
         if (canRefund)
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _showRefundConfirmationDialog(
+            child: ElevatedButton.icon(
+              onPressed: () => _showCancelConfirmationDialog(
                 context,
                 ref,
                 user,
                 currentOrder,
               ),
-              icon: Icon(Icons.dangerous, color: Colors.red),
+              icon: const Icon(Icons.cancel, color: Colors.white),
               label: Text(
                 currentOrder.status == OrderStatus.confirmed
-                    ? 'Issue Refund (Post-Delivery)'
-                    : 'Refund Order',
+                    ? 'Cancel Order & Issue Refund (Post-Delivery)'
+                    : 'Cancel Order',
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.red, width: 2),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -155,7 +155,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  void _showRefundConfirmationDialog(
+  void _showCancelConfirmationDialog(
     BuildContext context,
     WidgetRef ref,
     User user,
@@ -165,7 +165,7 @@ class OrderDetailsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Confirm Refund'),
+        title: const Text('Confirm Cancellation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -176,7 +176,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'This will issue a FULL refund of \$${order.total.toStringAsFixed(2)} to the customer.',
+              'This will CANCEL the order and issue a FULL refund of \$${order.total.toStringAsFixed(2)} to the customer.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
@@ -190,7 +190,7 @@ class OrderDetailsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Go Back'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -199,7 +199,7 @@ class OrderDetailsScreen extends ConsumerWidget {
               _processRefund(context, ref, user);
             },
             child: const Text(
-              'Yes, Refund',
+              'Yes, Cancel & Refund',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -216,7 +216,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Processing refund...'),
+        content: Text('Processing cancellation and refund...'),
         duration: Duration(seconds: 10),
       ),
     );
@@ -270,7 +270,7 @@ class OrderDetailsScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                'Refund successful! Customer has been refunded.',
+                'Order cancelled! Customer has been refunded.',
               ),
               backgroundColor: Colors.green,
               action: SnackBarAction(
