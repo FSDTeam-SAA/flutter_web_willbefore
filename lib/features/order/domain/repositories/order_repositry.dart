@@ -6,11 +6,18 @@ abstract class OrderRepository {
   //   required ShippingAddress shippingAddress,
   //   required String paymentIntentId,
   // });
-  
+
   Future<List<Order>> getUserOrders([String? userId]);
   Stream<List<Order>> getUserOrdersStream([String? userId]);
   Future<List<Order>> getAllOrders();
   Stream<List<Order>> getAllOrdersStream();
   Future<void> updateOrderStatus(String orderId, OrderStatus status);
+  Future<void> fulfillOrder({
+    required String orderId,
+    required String trackingNumber,
+    required String trackingUrl,
+    required String labelUrl,
+    required String shippoTransactionId,
+  });
   Future<Order?> getOrderById(String orderId);
 }

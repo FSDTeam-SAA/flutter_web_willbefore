@@ -24,9 +24,45 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   bool _isLoading = false;
   String? _trackingNumber;
   String? _labelUrl;
+  String? _trackingUrl;
   String? _error;
 
   final _shippo = AdminShippoService();
+
+  // Parcel Inputs
+  late TextEditingController _lengthController;
+  late TextEditingController _widthController;
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
+
+  String _distanceUnit = 'in';
+  String _massUnit = 'oz';
+
+  @override
+  void initState() {
+    super.initState();
+    _lengthController = TextEditingController(text: '10');
+    _widthController = TextEditingController(text: '6');
+    _heightController = TextEditingController(text: '4');
+
+    // Calculate initial weight from order items
+    final totalWeightOz = widget.order.items.fold<double>(
+      0,
+      (sum, item) => sum + (item.product.weightOz) * item.quantity,
+    );
+    // If calculated weight is 0, default to 8 oz
+    final initialWeight = totalWeightOz > 0 ? totalWeightOz : 8.0;
+    _weightController = TextEditingController(text: initialWeight.toString());
+  }
+
+  @override
+  void dispose() {
+    _lengthController.dispose();
+    _widthController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
 
   // --------------------------------------------------------------
   //  Address validation helper
@@ -50,11 +86,6 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   //  Generate label
   // --------------------------------------------------------------
   Future<void> _generateLabel() async {
-    final userId = widget.order.userId;
-    final orderId = widget.order.id;
-
-    sendShipmentNotification(userId: userId, orderId: orderId);
-
     setState(() {
       _isLoading = true;
       _error = null;
@@ -143,18 +174,26 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
       }
 
       // ---- 4. Parcel -------------------------------------------------------------
-      final totalWeightOz = widget.order.items.fold<double>(
-        0,
-        (sum, item) => sum + (item.product.weightOz) * item.quantity,
-      );
+      // ---- 4. Parcel -------------------------------------------------------------
+      // Get values from controllers
+      final length = double.tryParse(_lengthController.text);
+      final width = double.tryParse(_widthController.text);
+      final height = double.tryParse(_heightController.text);
+      final weight = double.tryParse(_weightController.text);
+
+      if (length == null || width == null || height == null || weight == null) {
+        throw Exception(
+          'Please enter valid numeric values for dimensions and weight.',
+        );
+      }
 
       final parcelId = await _shippo.createParcel(
-        length: 10,
-        width: 6,
-        height: 4,
-        distanceUnit: 'in',
-        weight: totalWeightOz > 0 ? totalWeightOz : 8,
-        massUnit: 'oz',
+        length: length,
+        width: width,
+        height: height,
+        distanceUnit: _distanceUnit,
+        weight: weight,
+        massUnit: _massUnit,
       );
       // Removed null check as createParcel throws on error
 
@@ -232,7 +271,24 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       // ---- 7. Buy label ---------------------------------------------------------
       final transaction = await _shippo.buyLabel(selectedRate['object_id']);
-      // Removed null check as buyLabel throws on error
+
+      // Check for Shippo/Carrier API errors (e.g. invalid address/phone)
+      if (transaction['status'] != 'SUCCESS') {
+        String msg = 'Label purchase failed';
+        if (transaction['messages'] != null) {
+          final messages = transaction['messages'] as List;
+          msg = messages.map((m) => m['text'] ?? m.toString()).join('\n');
+        }
+        throw Exception(msg);
+      }
+
+      // Ensure tracking number exists
+      final trackingRaw = transaction['tracking_number']?.toString();
+      if (trackingRaw == null || trackingRaw.isEmpty) {
+        throw Exception(
+          'Carrier did not provide a tracking number. Label generation aborted.',
+        );
+      }
 
       // ---- 8. Update order -------------------------------------------------------
       final success = await ref
@@ -240,6 +296,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
           .fulfillOrder(
             orderId: widget.order.id,
             trackingNumber: transaction['tracking_number'],
+            trackingUrl: transaction['tracking_url_provider'],
             labelUrl: transaction['label_url'],
             shippoTransactionId: transaction['object_id'],
           );
@@ -247,9 +304,22 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       // ---- 9. UI success ---------------------------------------------------------
       setState(() {
-        _trackingNumber = transaction['tracking_number'];
+        final tracking = transaction['tracking_number']?.toString();
+        _trackingNumber = (tracking != null && tracking.isNotEmpty)
+            ? tracking
+            : 'Not Provided by Carrier';
         _labelUrl = transaction['label_url'];
+        _trackingUrl = transaction['tracking_url_provider'];
       });
+
+      // ---- 10. Send Notification --------------------------------------------------
+      await sendShipmentNotification(
+        orderId: widget.order.id,
+        userId: widget.order.userId,
+        trackingNumber: transaction['tracking_number'],
+        trackingUrl: transaction['tracking_url_provider'],
+        labelUrl: transaction['label_url'],
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -306,6 +376,11 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
           children: [
             _buildSummaryCard(),
             const SizedBox(height: 24),
+            // Parcel Details Input
+            if (_labelUrl == null) ...[
+              _buildParcelDetailsCard(),
+              const SizedBox(height: 24),
+            ],
 
             // Generate button
             if (_labelUrl == null)
@@ -341,17 +416,26 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
                 ),
               ),
 
-            // Success UI
             if (_labelUrl != null) ...[
               _buildSuccessCard(),
               const SizedBox(height: 16),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () => launchUrl(Uri.parse(_labelUrl!)),
-                  icon: const Icon(Icons.print),
-                  label: const Text('Print Label'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () => launchUrl(Uri.parse(_labelUrl!)),
+                    icon: const Icon(Icons.print),
+                    label: const Text('Print Label'),
+                  ),
+                  if (_trackingUrl != null && _trackingUrl!.isNotEmpty) ...[
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => launchUrl(Uri.parse(_trackingUrl!)),
+                      icon: const Icon(Icons.location_on),
+                      label: const Text('Track Package'),
+                    ),
+                  ],
+                ],
               ),
             ],
 
@@ -429,6 +513,123 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildParcelDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Parcel Details',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _lengthController,
+                  label: 'Length',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTextField(
+                  controller: _widthController,
+                  label: 'Width',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildTextField(
+                  controller: _heightController,
+                  label: 'Height',
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 75,
+                child: DropdownButtonFormField<String>(
+                  value: _distanceUnit,
+                  decoration: const InputDecoration(
+                    labelText: 'Unit',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 0,
+                    ),
+                  ),
+                  items: ['in', 'cm', 'ft', 'mm']
+                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _distanceUnit = v!),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildTextField(
+                  controller: _weightController,
+                  label: 'Weight',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: DropdownButtonFormField<String>(
+                  value: _massUnit,
+                  decoration: const InputDecoration(
+                    labelText: 'Unit',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 0,
+                    ),
+                  ),
+                  items: ['oz', 'lb', 'kg', 'g']
+                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _massUnit = v!),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Required';
+        if (double.tryParse(value) == null) return 'Invalid';
+        return null;
+      },
     );
   }
 }

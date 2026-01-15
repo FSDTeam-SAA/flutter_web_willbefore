@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:flutx_core/flutx_core.dart'; // Added flutx_core import for DPrint logging
 import '../../domain/entities/order_entities.dart';
+import '../../../product/domain/entrity/product.dart';
 import 'cart_item_model.dart';
 
 class OrderModel {
@@ -16,7 +17,11 @@ class OrderModel {
   final DateTime? estimatedDelivery;
   final String? paymentIntentId;
   final String? trackingNumber;
+  final String? trackingUrl;
+  final String? shippoTransactionId;
+  final String? labelUrl;
   final DateTime? updatedAt;
+  final DateTime? shippedAt;
 
   const OrderModel({
     required this.id,
@@ -31,7 +36,11 @@ class OrderModel {
     this.estimatedDelivery,
     this.paymentIntentId,
     this.trackingNumber,
+    this.trackingUrl,
+    this.shippoTransactionId,
+    this.labelUrl,
     this.updatedAt,
+    this.shippedAt,
   });
 
   factory OrderModel.fromEntity(Order order) {
@@ -48,7 +57,11 @@ class OrderModel {
       estimatedDelivery: order.estimatedDelivery,
       paymentIntentId: order.paymentIntentId,
       trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+      shippoTransactionId: order.shippoTransactionId,
+      labelUrl: order.labelUrl,
       updatedAt: order.updatedAt,
+      shippedAt: order.shippedAt,
     );
   }
 
@@ -69,63 +82,53 @@ class OrderModel {
                 return CartItemModel.fromMap(item).toCartItem();
               } catch (e) {
                 DPrint.log('🚨 Error converting cart item: $e');
+
+                // Try one more level of nesting if CartItemModel failed
+                // (In case product data is nested under 'product' or 'data' key)
+                final nestedItem = item['product'] is Map
+                    ? item['product'] as Map<String, dynamic>
+                    : (item['data'] is Map
+                          ? item['data'] as Map<String, dynamic>
+                          : item);
+
                 // Return a placeholder CartItem to prevent complete failure
                 return CartItem(
-                  id: 'error-${DateTime.now().millisecondsSinceEpoch}',
-                  product: item['product'] ?? 'unknown',
-                  quantity: item['quantity'] ?? 1,
-                  selectedSize: item['selectedSize'],
-                  selectedColor: item['selectedColor'],
-                  // product: Product(
-                  //   id: item['productId'] ?? 'unknown',
-                  //   title: item['productName'] ?? 'Error Loading Product',
-                  //   description: item['productDescription'] ?? '',
-                  //   actualPrice:
-                  //       (item['productActualPrice'] ??
-                  //               item['productPrice'] ??
-                  //               0.0)
-                  //           .toDouble(),
-                  //   discountPrice: item['productDiscountPrice'] != null
-                  //       ? (item['productDiscountPrice'] as num).toDouble()
-                  //       : null,
-                  //   stock: item['productStock'] ?? 0,
-                  //   categoryId: item['productCategoryId'] ?? '',
-                  //   promoId: item['productPromoId'],
-                  //   sizes: item['productSizes'] != null
-                  //       ? List<String>.from(item['productSizes'])
-                  //       : [],
-                  //   colors: item['productColors'] != null
-                  //       ? List<String>.from(item['productColors'])
-                  //       : [],
-                  //   colorCodes: item['productColorCodes'] != null
-                  //       ? List<String>.from(item['productColorCodes'])
-                  //       : [],
-                  //   imageUrls: item['productImageUrls'] != null
-                  //       ? List<String>.from(item['productImageUrls'])
-                  //       : item['productImage'] != null
-                  //       ? [item['productImage']]
-                  //       : [],
-                  //   facilities: item['productFacilities'] != null
-                  //       ? Map<String, dynamic>.from(item['productFacilities'])
-                  //       : null,
-                  //   isActive: item['productIsActive'] ?? true,
-                  //   createdAt: item['productCreatedAt'] is int
-                  //       ? DateTime.fromMillisecondsSinceEpoch(
-                  //           item['productCreatedAt'],
-                  //         )
-                  //       : (item['productCreatedAt'] is String
-                  //             ? DateTime.tryParse(item['productCreatedAt']) ??
-                  //                   DateTime.now()
-                  //             : DateTime.now()),
-                  //   updatedAt: item['productUpdatedAt'] is int
-                  //       ? DateTime.fromMillisecondsSinceEpoch(
-                  //           item['productUpdatedAt'],
-                  //         )
-                  //       : (item['productUpdatedAt'] is String
-                  //             ? DateTime.tryParse(item['productUpdatedAt']) ??
-                  //                   DateTime.now()
-                  //             : DateTime.now()),
-                  // ),
+                  id:
+                      item['id']?.toString() ??
+                      'error-${DateTime.now().millisecondsSinceEpoch}',
+                  quantity: (item['quantity'] ?? 1).toInt(),
+                  selectedSize: item['selectedSize']?.toString(),
+                  selectedColor: item['selectedColor']?.toString(),
+                  product: Product(
+                    id:
+                        nestedItem['id']?.toString() ??
+                        nestedItem['productId']?.toString() ??
+                        'unknown',
+                    title:
+                        nestedItem['title']?.toString() ??
+                        nestedItem['name']?.toString() ??
+                        nestedItem['productName']?.toString() ??
+                        'Unknown Product',
+                    description: nestedItem['description']?.toString() ?? '',
+                    actualPrice:
+                        (nestedItem['actualPrice'] ??
+                                nestedItem['price'] ??
+                                nestedItem['productPrice'] ??
+                                0.0)
+                            .toDouble(),
+                    stock: 0,
+                    categoryId: '',
+                    sizes: [],
+                    colors: [],
+                    colorCodes: [],
+                    imageUrls: nestedItem['imageUrls'] != null
+                        ? List<String>.from(nestedItem['imageUrls'])
+                        : (nestedItem['image'] != null
+                              ? [nestedItem['image'].toString()]
+                              : []),
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  ),
                 );
               }
             })
@@ -182,7 +185,11 @@ class OrderModel {
       estimatedDelivery: parseTimestamp(data['estimatedDelivery']),
       paymentIntentId: data['paymentIntentId']?.toString(),
       trackingNumber: data['trackingNumber']?.toString(),
+      trackingUrl: data['trackingUrl']?.toString(),
+      shippoTransactionId: data['shippoTransactionId']?.toString(),
+      labelUrl: data['labelUrl']?.toString(),
       updatedAt: parseTimestamp(data['updatedAt']),
+      shippedAt: parseTimestamp(data['shippedAt']),
     );
 
     DPrint.log('✅ Successfully created OrderModel with ${items.length} items');
@@ -206,7 +213,11 @@ class OrderModel {
           : null,
       'paymentIntentId': paymentIntentId,
       'trackingNumber': trackingNumber,
+      'trackingUrl': trackingUrl,
+      'shippoTransactionId': shippoTransactionId,
+      'labelUrl': labelUrl,
       'updatedAt': FieldValue.serverTimestamp(),
+      'shippedAt': shippedAt != null ? Timestamp.fromDate(shippedAt!) : null,
     };
   }
 
@@ -227,7 +238,11 @@ class OrderModel {
       estimatedDelivery: estimatedDelivery,
       paymentIntentId: paymentIntentId,
       trackingNumber: trackingNumber,
+      trackingUrl: trackingUrl,
+      shippoTransactionId: shippoTransactionId,
+      labelUrl: labelUrl,
       updatedAt: updatedAt,
+      shippedAt: shippedAt,
     );
   }
 }

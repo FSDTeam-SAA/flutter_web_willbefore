@@ -12,6 +12,13 @@ abstract class OrderRemoteDataSource {
   Future<List<Order>> getAllOrders();
   Stream<List<Order>> getAllOrdersStream();
   Future<void> updateOrderStatus(String orderId, OrderStatus status);
+  Future<void> fulfillOrder({
+    required String orderId,
+    required String trackingNumber,
+    required String trackingUrl,
+    required String labelUrl,
+    required String shippoTransactionId,
+  });
   Future<Order?> getOrderById(String orderId);
 }
 
@@ -89,7 +96,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       final data = querySnapshot.docs
           .map((doc) => OrderModel.fromFirestore(doc).toEntity())
           .toList();
-          
+
       DPrint.log('Fetched ${data.length} orders from all orders collection');
 
       return data;
@@ -144,6 +151,50 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to update order status: $e');
+    }
+  }
+
+  @override
+  Future<void> fulfillOrder({
+    required String orderId,
+    required String trackingNumber,
+    required String trackingUrl,
+    required String labelUrl,
+    required String shippoTransactionId,
+  }) async {
+    try {
+      final batch = _firestore.batch();
+      final mainOrderRef = _firestore.collection('orders').doc(orderId);
+
+      final updateData = {
+        'status': OrderStatus.shipped.name,
+        'trackingNumber': trackingNumber,
+        'trackingUrl': trackingUrl,
+        'labelUrl': labelUrl,
+        'shippoTransactionId': shippoTransactionId,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'shippedAt': FieldValue.serverTimestamp(),
+      };
+
+      batch.update(mainOrderRef, updateData);
+
+      // Get userId to update user's subcollection
+      final orderDoc = await mainOrderRef.get();
+      if (orderDoc.exists) {
+        final userId = orderDoc.data()?['userId'];
+        if (userId != null) {
+          final userOrderRef = _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('orders')
+              .doc(orderId);
+          batch.update(userOrderRef, updateData);
+        }
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to fulfill order: $e');
     }
   }
 

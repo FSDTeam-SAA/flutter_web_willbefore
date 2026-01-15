@@ -5,6 +5,9 @@ import 'package:flutx_core/core/debug_print.dart';
 Future<void> sendShipmentNotification({
   required String orderId,
   required String userId,
+  required String? trackingNumber,
+  required String? trackingUrl,
+  required String? labelUrl,
 }) async {
   // 1. Get user's FCM token from Firestore
   final userDoc = await FirebaseFirestore.instance
@@ -17,32 +20,53 @@ Future<void> sendShipmentNotification({
     return;
   }
 
-  // final fcmToken = userDoc.data()?['fcmToken'] as String?;
-  final fcmToken =
-      "f_8iGeB9xUVxsG83yd1FQV:APA91bE5CM1Oo04P6JtExoc3XMnbjwUKmYOqanAnFSzGrLgVOuo6W0PMfG0Hk_K_5593ganexCc0DjBV11ZxWNuP3PYWljx3Tot6WUqgGksuzvtR8qzoMEM";
+  final fcmToken = userDoc.data()?['fcmToken'] as String?;
 
-  if (fcmToken.isEmpty) {
+  if (fcmToken == null || fcmToken.isEmpty) {
     DPrint.warn("No FCM token found for user: $userId");
-    return;
+    // We still want to persist the notification even if push fails
+  } else {
+    // 2. Send Push Notification via Cloud Function
+    final callable = FirebaseFunctions.instance.httpsCallable(
+      "startShipment",
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+    );
+
+    try {
+      await callable.call({
+        "fcmToken": fcmToken,
+        "orderId": orderId,
+        "trackingNumber": trackingNumber,
+        "trackingUrl": trackingUrl,
+        "labelUrl": labelUrl,
+      });
+      DPrint.log("Push notification sent successfully");
+    } catch (e) {
+      DPrint.error("Failed to send shipment notification: $e");
+    }
   }
 
-  final callable = FirebaseFunctions.instance.httpsCallable(
-    "startShipment",
-    options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-  );
-
+  // 3. Add to Notification Collection
   try {
-    await callable.call({"fcmToken": fcmToken, "orderId": orderId});
-    DPrint.log("Push notification sent successfully");
-    // final userDoc = await FirebaseFirestore.instance
-    //     .collection('users')
-    //     .doc(userId)
-    //     .get();
-
-        
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .add({
+          'title': 'Order Shipped',
+          'body':
+              'Your order #$orderId has been shipped! Tracking: ${trackingNumber ?? "N/A"}',
+          'orderId': orderId,
+          'trackingNumber': trackingNumber,
+          'trackingUrl': trackingUrl,
+          'labelUrl': labelUrl,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+          'type': 'shipment',
+        });
+    DPrint.log("Notification added to collection successfully");
   } catch (e) {
-    DPrint.error("Failed to send shipment notification: $e");
-    // Don't rethrow if you don't want to break label generation
+    DPrint.error("Failed to add notification to collection: $e");
   }
 }
 

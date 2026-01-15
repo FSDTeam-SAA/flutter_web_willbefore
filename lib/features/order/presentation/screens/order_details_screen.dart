@@ -6,6 +6,7 @@ import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/routes/route_endpoint.dart';
 import '../../domain/entities/order_entities.dart';
@@ -20,13 +21,18 @@ class OrderDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final adminOrderState = ref.watch(adminOrderProvider);
+    final currentOrder = adminOrderState.orders.firstWhere(
+      (o) => o.id == order.id,
+      orElse: () => order,
+    );
+
     final user = adminOrderState.users.firstWhere(
-      (user) => user.id == order.userId,
+      (user) => user.id == currentOrder.userId,
       orElse: () => User(
-        id: order.userId,
-        name: order.shippingAddress.fullName,
-        email: order.shippingAddress.email,
-        phoneNumber: order.shippingAddress.phoneNumber,
+        id: currentOrder.userId,
+        name: currentOrder.shippingAddress.fullName,
+        email: currentOrder.shippingAddress.email,
+        phoneNumber: currentOrder.shippingAddress.phoneNumber,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       ),
@@ -48,30 +54,40 @@ class OrderDetailsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildOrderSummary(),
+            _buildOrderSummary(currentOrder),
+            if (currentOrder.trackingNumber != null ||
+                currentOrder.labelUrl != null) ...[
+              const SizedBox(height: 24),
+              _buildShipmentInfo(currentOrder),
+            ],
             const SizedBox(height: 24),
-            _buildCustomerInfo(user),
+            _buildCustomerInfo(user, currentOrder),
             const SizedBox(height: 24),
-            _buildOrderItems(),
+            _buildOrderItems(currentOrder),
             const SizedBox(height: 24),
-            _buildShippingInfo(),
+            _buildShippingInfo(currentOrder),
             const SizedBox(height: 24),
-            // _buildStatusUpdateSection(context, ref),
-            _buildFulfillButton(context),
+            // _buildStatusUpdateSection(context, ref, currentOrder),
+            _buildFulfillButton(context, currentOrder),
             const SizedBox(height: 24),
-            _buildActionButtons(context, ref, user),
+            _buildActionButtons(context, ref, user, currentOrder),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, WidgetRef ref, User user) {
-    final bool canFulfill = order.status == OrderStatus.confirmed;
+  Widget _buildActionButtons(
+    BuildContext context,
+    WidgetRef ref,
+    User user,
+    Order currentOrder,
+  ) {
+    final bool canFulfill = currentOrder.status == OrderStatus.confirmed;
     final bool canRefund = [
       OrderStatus.pending,
       OrderStatus.cancelled,
-    ].contains(order.status);
+    ].contains(currentOrder.status);
 
     DPrint.log('Order Status: ${canRefund}');
 
@@ -87,7 +103,10 @@ class OrderDetailsScreen extends ConsumerWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  context.goNamed(RouteEndpoint.fullfillOrder, extra: order);
+                  context.goNamed(
+                    RouteEndpoint.fullfillOrder,
+                    extra: currentOrder,
+                  );
                 },
                 icon: const Icon(Icons.local_shipping, color: Colors.white),
                 label: const Text('Fulfill Order'),
@@ -107,11 +126,15 @@ class OrderDetailsScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () =>
-                  _showRefundConfirmationDialog(context, ref, user),
+              onPressed: () => _showRefundConfirmationDialog(
+                context,
+                ref,
+                user,
+                currentOrder,
+              ),
               icon: Icon(Icons.dangerous, color: Colors.red),
               label: Text(
-                order.status == OrderStatus.confirmed
+                currentOrder.status == OrderStatus.confirmed
                     ? 'Issue Refund (Post-Delivery)'
                     : 'Refund Order',
                 style: const TextStyle(
@@ -136,6 +159,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     User user,
+    Order currentOrder,
   ) {
     showDialog(
       context: context,
@@ -283,7 +307,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildOrderSummary() {
+  Widget _buildOrderSummary(Order currentOrder) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -313,7 +337,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               Text(
-                DateFormat('MMM dd, yyyy HH:mm').format(order.createdAt),
+                DateFormat('MMM dd, yyyy HH:mm').format(currentOrder.createdAt),
                 style: const TextStyle(fontSize: 14),
               ),
             ],
@@ -327,7 +351,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               Text(
-                '\$${order.total.toStringAsFixed(2)}',
+                '\$${currentOrder.total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -350,13 +374,13 @@ class OrderDetailsScreen extends ConsumerWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: order.status.color.withOpacity(0.1),
+                  color: currentOrder.status.color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  order.status.displayName,
+                  currentOrder.status.displayName,
                   style: TextStyle(
-                    color: order.status.color,
+                    color: currentOrder.status.color,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -369,7 +393,93 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCustomerInfo(User user) {
+  Widget _buildShipmentInfo(Order currentOrder) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Shipment Information',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          if (currentOrder.trackingNumber != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Tracking Number:',
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  currentOrder.trackingNumber!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (currentOrder.labelUrl != null)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        launchUrl(Uri.parse(currentOrder.labelUrl!)),
+                    icon: const Icon(Icons.print, size: 18),
+                    label: const Text('View Label'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              if (currentOrder.labelUrl != null &&
+                  currentOrder.trackingUrl != null)
+                const SizedBox(width: 12),
+              if (currentOrder.trackingUrl != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () =>
+                        launchUrl(Uri.parse(currentOrder.trackingUrl!)),
+                    icon: const Icon(Icons.location_on, size: 18),
+                    label: const Text('Track Package'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerInfo(User user, Order currentOrder) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -412,7 +522,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOrderItems() {
+  Widget _buildOrderItems(Order currentOrder) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -434,7 +544,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          ...order.items.asMap().entries.map((entry) {
+          ...currentOrder.items.asMap().entries.map((entry) {
             final index = entry.key;
             final item = entry.value;
             return Column(
@@ -517,7 +627,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildShippingInfo() {
+  Widget _buildShippingInfo(Order currentOrder) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -540,23 +650,23 @@ class OrderDetailsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            order.shippingAddress.fullName,
+            currentOrder.shippingAddress.fullName,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
-            order.shippingAddress.addressLine1,
+            currentOrder.shippingAddress.addressLine1,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            '${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}',
+            '${currentOrder.shippingAddress.city}, ${currentOrder.shippingAddress.state} ${currentOrder.shippingAddress.postalCode}',
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
-          if (order.shippingAddress.country.isNotEmpty) ...[
+          if (currentOrder.shippingAddress.country.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              order.shippingAddress.country,
+              currentOrder.shippingAddress.country,
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
@@ -565,13 +675,14 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFulfillButton(BuildContext context) {
-    if (order.status != OrderStatus.pending) return const SizedBox.shrink();
+  Widget _buildFulfillButton(BuildContext context, Order currentOrder) {
+    if (currentOrder.status != OrderStatus.pending)
+      return const SizedBox.shrink();
 
     return Center(
       child: ElevatedButton.icon(
         onPressed: () {
-          context.goNamed(RouteEndpoint.fullfillOrder, extra: order);
+          context.goNamed(RouteEndpoint.fullfillOrder, extra: currentOrder);
         },
         icon: const Icon(
           Icons.local_shipping,

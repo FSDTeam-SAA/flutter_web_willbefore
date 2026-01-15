@@ -105,31 +105,35 @@ class AdminOrderNotifier extends StateNotifier<AdminOrderState> {
   Future<bool> fulfillOrder({
     required String orderId,
     required String trackingNumber,
+    required String trackingUrl,
     required String labelUrl,
     required String shippoTransactionId,
   }) async {
     state = state.copyWith(isUpdating: true);
     try {
-      // await _orderRepository.fulfillOrder(
-      //   orderId: orderId,
-      //   trackingNumber: trackingNumber,
-      //   labelUrl: labelUrl,
-      //   shippoTransactionId: shippoTransactionId,
-      // );
+      await _orderRepository.fulfillOrder(
+        orderId: orderId,
+        trackingNumber: trackingNumber,
+        trackingUrl: trackingUrl,
+        labelUrl: labelUrl,
+        shippoTransactionId: shippoTransactionId,
+      );
 
-      // final updatedOrders = state.orders.map((o) {
-      //   if (o.id == orderId) {
-      //     return o.copyWith(
-      //       status: OrderStatus.shipped,
-      //       trackingNumber: trackingNumber,
-      //       labelUrl: labelUrl,
-      //       shippoTransactionId: shippoTransactionId,
-      //     );
-      //   }
-      //   return o;
-      // }).toList();
+      final updatedOrders = state.orders.map((o) {
+        if (o.id == orderId) {
+          return o.copyWith(
+            status: OrderStatus.shipped,
+            trackingNumber: trackingNumber,
+            trackingUrl: trackingUrl,
+            labelUrl: labelUrl,
+            shippoTransactionId: shippoTransactionId,
+            shippedAt: DateTime.now(),
+          );
+        }
+        return o;
+      }).toList();
 
-      // state = state.copyWith(orders: updatedOrders, isUpdating: false);
+      state = state.copyWith(orders: updatedOrders, isUpdating: false);
       return true;
     } catch (e) {
       state = state.copyWith(isUpdating: false, errorMessage: e.toString());

@@ -126,6 +126,10 @@ class Order {
   final DateTime? updatedAt;
   final DateTime? estimatedDelivery;
   final String? trackingNumber;
+  final String? trackingUrl;
+  final String? shippoTransactionId;
+  final String? labelUrl;
+  final DateTime? shippedAt;
 
   const Order({
     required this.id,
@@ -141,6 +145,10 @@ class Order {
     this.updatedAt,
     this.estimatedDelivery,
     this.trackingNumber,
+    this.trackingUrl,
+    this.shippoTransactionId,
+    this.labelUrl,
+    this.shippedAt,
   });
 
   Order copyWith({
@@ -157,6 +165,10 @@ class Order {
     DateTime? updatedAt,
     DateTime? estimatedDelivery,
     String? trackingNumber,
+    String? trackingUrl,
+    String? shippoTransactionId,
+    String? labelUrl,
+    DateTime? shippedAt,
   }) {
     return Order(
       id: id ?? this.id,
@@ -172,6 +184,10 @@ class Order {
       updatedAt: updatedAt ?? this.updatedAt,
       estimatedDelivery: estimatedDelivery ?? this.estimatedDelivery,
       trackingNumber: trackingNumber ?? this.trackingNumber,
+      trackingUrl: trackingUrl ?? this.trackingUrl,
+      shippoTransactionId: shippoTransactionId ?? this.shippoTransactionId,
+      labelUrl: labelUrl ?? this.labelUrl,
+      shippedAt: shippedAt ?? this.shippedAt,
     );
   }
 

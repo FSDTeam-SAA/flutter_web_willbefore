@@ -206,7 +206,9 @@ class AdminShippoService {
     try {
       final res = await http.post(url, headers: headers, body: body);
       if (res.statusCode == 201) {
-        return jsonDecode(res.body);
+        final data = jsonDecode(res.body);
+        DPrint.log('Transaction Success: $data');
+        return data;
       } else {
         DPrint.error('Transaction Error: ${res.body}');
         throw Exception('Transaction Error: ${res.body}');

@@ -84,6 +84,23 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<void> fulfillOrder({
+    required String orderId,
+    required String trackingNumber,
+    required String trackingUrl,
+    required String labelUrl,
+    required String shippoTransactionId,
+  }) async {
+    await _remoteDataSource.fulfillOrder(
+      orderId: orderId,
+      trackingNumber: trackingNumber,
+      trackingUrl: trackingUrl,
+      labelUrl: labelUrl,
+      shippoTransactionId: shippoTransactionId,
+    );
+  }
+
+  @override
   Future<Order?> getOrderById(String orderId) async {
     return await _remoteDataSource.getOrderById(orderId);
   }

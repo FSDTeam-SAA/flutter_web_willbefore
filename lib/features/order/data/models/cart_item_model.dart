@@ -41,17 +41,63 @@ class CartItemModel {
 
   factory CartItemModel.fromMap(Map<String, dynamic> map) {
     try {
+      // Sources for product data (priority to nested 'product' or 'data')
+      final nestedProduct = (map['product'] is Map
+          ? map['product'] as Map<String, dynamic>
+          : (map['data'] is Map ? map['data'] as Map<String, dynamic> : null));
+
+      final sources = [if (nestedProduct != null) nestedProduct, map];
+
+      // Helper to get value from multiple possible keys across multiple sources
+      dynamic getFromSources(List<String> keys) {
+        for (var source in sources) {
+          for (var key in keys) {
+            if (source.containsKey(key) && source[key] != null)
+              return source[key];
+          }
+        }
+        return null;
+      }
+
       return CartItemModel(
         id:
             map['id']?.toString() ??
+            map['item_id']?.toString() ??
             DateTime.now().millisecondsSinceEpoch.toString(),
-        productId: map['productId']?.toString() ?? '',
-        productName: map['productName']?.toString() ?? 'Unknown Product',
-        productPrice: (map['productPrice'] ?? 0.0).toDouble(),
-        productImage: map['productImage']?.toString(),
-        quantity: (map['quantity'] ?? 1).toInt(),
-        selectedSize: map['selectedSize']?.toString(),
-        selectedColor: map['selectedColor']?.toString(),
+        productId:
+            getFromSources(['productId', 'product_id', 'id'])?.toString() ?? '',
+        productName:
+            getFromSources([
+              'productName',
+              'product_name',
+              'name',
+              'title',
+            ])?.toString() ??
+            'Unknown Product',
+        productPrice:
+            (getFromSources([
+                      'productPrice',
+                      'product_price',
+                      'price',
+                      'actualPrice',
+                    ]) ??
+                    0.0)
+                .toDouble(),
+        productImage: (() {
+          final img = getFromSources([
+            'productImage',
+            'product_image',
+            'image',
+            'imageUrl',
+            'image_url',
+            'imageUrls',
+          ]);
+          if (img is List && img.isNotEmpty) return img.first.toString();
+          return img?.toString();
+        })(),
+        quantity: (map['quantity'] ?? map['qty'] ?? 1).toInt(),
+        selectedSize: (map['selectedSize'] ?? map['size'])?.toString(),
+        selectedColor: (map['selectedColor'] ?? map['color'])?.toString(),
       );
     } catch (e) {
       DPrint.log('🚨 Error in CartItemModel.fromMap: $e, data: $map');
