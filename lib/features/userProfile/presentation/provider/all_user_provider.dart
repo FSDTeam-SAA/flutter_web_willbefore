@@ -1,4 +1,5 @@
 // features/users/presentation/providers/user_provider.dart
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -56,27 +57,38 @@ final userProvider = StateNotifierProvider<UserProvider, AllUserState>((ref) {
 final currentUserProvider = Provider<UserModel?>((ref) {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return null;
-  return ref
-      .watch(userProvider)
-      .users
-      .firstWhere(
-        (u) => u.id == user.uid,
-        orElse: () => throw Exception('Current user not found'),
-      );
+
+  final users = ref.watch(userProvider).users;
+  final index = users.indexWhere((u) => u.id == user.uid);
+
+  if (index != -1) {
+    return users[index];
+  }
+
+  return null;
 });
 
 class UserProvider extends StateNotifier<AllUserState> {
   final AllUserProfileRepository _userRepository;
+  StreamSubscription? _usersSubscription;
 
   UserProvider(this._userRepository) : super(const AllUserState()) {
     _loadUsers();
   }
 
+  @override
+  void dispose() {
+    _usersSubscription?.cancel();
+    super.dispose();
+  }
+
   void _loadUsers() {
     state = state.copyWith(isLoading: true);
 
+    _usersSubscription?.cancel();
+
     // Listen to users stream
-    _userRepository.getUsers().listen(
+    _usersSubscription = _userRepository.getUsers().listen(
       (users) {
         state = state.copyWith(
           users: users,
@@ -140,11 +152,14 @@ class UserProvider extends StateNotifier<AllUserState> {
 
       // Success!
       if (result.data['success'] == true) {
-        // Optionally show success message
+        // Success!
         state = state.copyWith(isLoading: false, errorMessage: null);
 
-        // Optional: Show snackbar or toast
-        // You can use a global messenger or ref.read some notifier
+        // Refresh users list immediately
+        // The Cloud Function might take a split second to create the doc in Firestore
+        Future.delayed(const Duration(milliseconds: 500), () {
+          refreshUsers();
+        });
 
         return true;
       } else {

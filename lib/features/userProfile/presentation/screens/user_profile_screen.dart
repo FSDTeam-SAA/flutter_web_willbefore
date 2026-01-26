@@ -115,31 +115,31 @@ class _AllUserProfileScreenState extends ConsumerState<AllUserProfileScreen> {
           const SizedBox(height: 24),
 
           // Add User Button - Beautiful & Prominent
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: () => _showCreateUserDialog(context),
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text(
-                'Add New User',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryLaurel,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: AppColors.primaryLaurel.withOpacity(0.4),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
+          // Align(
+          //   alignment: Alignment.centerRight,
+          //   child: ElevatedButton.icon(
+          //     onPressed: () => _showCreateUserDialog(context),
+          //     icon: const Icon(Icons.add, size: 20),
+          //     label: const Text(
+          //       'Add New User',
+          //       style: TextStyle(fontWeight: FontWeight.w600),
+          //     ),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: AppColors.primaryLaurel,
+          //       foregroundColor: Colors.white,
+          //       padding: const EdgeInsets.symmetric(
+          //         horizontal: 24,
+          //         vertical: 16,
+          //       ),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //       elevation: 4,
+          //       shadowColor: AppColors.primaryLaurel.withOpacity(0.4),
+          //     ),
+          //   ),
+          // ),
+          // const SizedBox(height: 24),
 
           // Users Table
           Expanded(
