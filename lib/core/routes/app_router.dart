@@ -92,21 +92,22 @@ class AppRouter {
             builder: (context, state) => const OrdersScreen(),
             routes: [
               GoRoute(
-                path: RouteEndpoint.ordersDetails, // e.g., 'details'
-                name: RouteEndpoint.ordersDetails,
+                path: RouteEndpoint.ordersDetails, // e.g., 'orders-details/:id'
+                name: RouteEndpoint.ordersDetails.split('/:').first,
                 builder: (context, state) {
-                  final order =
-                      state.extra as Order; // Cast state.extra to Order
-                  return OrderDetailsScreen(order: order);
+                  final id = state.pathParameters['id']!;
+                  final order = state.extra as Order?;
+                  return OrderDetailsScreen(orderId: id, initialOrder: order);
                 },
               ),
 
               GoRoute(
-                path: RouteEndpoint.fullfillOrder, // 'ful-fill-Order'
-                name: RouteEndpoint.fullfillOrder,
+                path: RouteEndpoint.fullfillOrder, // 'ful-fill-Order/:id'
+                name: RouteEndpoint.fullfillOrder.split('/:').first,
                 builder: (context, state) {
-                  final order = state.extra as Order;
-                  return FullfillOrderScreen(order: order);
+                  final id = state.pathParameters['id']!;
+                  final order = state.extra as Order?;
+                  return FullfillOrderScreen(orderId: id, initialOrder: order);
                 },
               ),
             ],

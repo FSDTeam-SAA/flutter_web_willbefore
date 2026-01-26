@@ -284,60 +284,15 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
 
   Widget _buildOrderRow(Order order, bool isUpdating) {
     final firstItem = order.items.isNotEmpty ? order.items.first : null;
-    final adminState = ref.read(adminOrderProvider);
-
-    final user = adminState.users.isNotEmpty
-        ? adminState.users.firstWhere(
-            (user) => user.id == order.userId,
-            orElse: () => User(
-              id: order.userId,
-              name: order.shippingAddress.fullName,
-              email: order.shippingAddress.email,
-              phoneNumber: order.shippingAddress.phoneNumber,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          )
-        : User(
-            id: order.userId,
-            name: order.shippingAddress.fullName,
-            email: order.shippingAddress.email,
-            phoneNumber: order.shippingAddress.phoneNumber,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
+    final shippingAddress = order.shippingAddress;
 
     return InkWell(
       onTap: () {
-        context.goNamed(RouteEndpoint.ordersDetails, extra: order);
-        // Inside _buildOrderRow → after status chip
-        // DPrint.info("Product status : ${order.status}");
-        // DPrint.info("Product status 2 : ${OrderStatus.confirmed}");
-        // if (order.status == OrderStatus.confirmed) {
-        //   Padding(
-        //     padding: const EdgeInsets.only(left: 8),
-        //     child: ElevatedButton.icon(
-        //       onPressed: isUpdating
-        //           ? null
-        //           : () => context.goNamed(
-        //               RouteEndpoint.fullfillOrder,
-        //               extra: order,
-        //             ),
-        //       icon: const Icon(Icons.local_shipping, size: 14),
-        //       label: const Text('Fulfill', style: TextStyle(fontSize: 12)),
-        //       style: ElevatedButton.styleFrom(
-        //         backgroundColor: Colors.green,
-        //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        //       ),
-        //     ),
-        //   );
-        // }
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => OrderDetailsScreen(order: order),
-        //   ),
-        // );
+        context.goNamed(
+          RouteEndpoint.ordersDetails.split('/').first,
+          pathParameters: {'id': order.id},
+          extra: order,
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -372,7 +327,7 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user.name ?? 'Unknown User',
+                    shippingAddress.fullName,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -380,13 +335,13 @@ class _AdminOrdersScreenState extends ConsumerState<OrdersScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    user.email,
+                    shippingAddress.email,
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
-                  if (user.phoneNumber != null) ...[
+                  if (shippingAddress.phoneNumber.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
-                      user.phoneNumber!,
+                      shippingAddress.phoneNumber,
                       style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                     ),
                   ],

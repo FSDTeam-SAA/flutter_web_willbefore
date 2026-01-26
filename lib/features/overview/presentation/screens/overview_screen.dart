@@ -132,12 +132,14 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _totalRevenue = total;
         _revenueData = _aggregateChartData(chartData, _revenueFilter);
         _isLoadingRevenue = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoadingRevenue = false;
       });
@@ -159,11 +161,13 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
         limit: 10,
         status: _chargeFilter == 'All' ? null : _chargeFilter.toLowerCase(),
       );
+      if (!mounted) return;
       setState(() {
         _charges = charges ?? [];
         _isLoadingCharges = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoadingCharges = false;
       });
@@ -234,6 +238,7 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
     );
 
     chartData.sort((a, b) => int.parse(a.label).compareTo(int.parse(b.label)));
+    if (!mounted) return;
     setState(() {
       _liveProductData = chartData.take(12).toList();
     });
@@ -279,6 +284,7 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
     );
 
     chartData.sort((a, b) => int.parse(a.label).compareTo(int.parse(b.label)));
+    if (!mounted) return;
     setState(() {
       _newUserData = chartData.take(12).toList();
     });

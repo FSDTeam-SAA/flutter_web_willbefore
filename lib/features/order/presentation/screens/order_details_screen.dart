@@ -14,34 +14,34 @@ import '../../domain/entities/user_entities.dart';
 import '../providers/order_provider.dart';
 
 class OrderDetailsScreen extends ConsumerWidget {
-  final Order order;
+  final String orderId;
+  final Order? initialOrder;
 
-  const OrderDetailsScreen({super.key, required this.order});
+  const OrderDetailsScreen({
+    super.key,
+    required this.orderId,
+    this.initialOrder,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final adminOrderState = ref.watch(adminOrderProvider);
-    final currentOrder = adminOrderState.orders.firstWhere(
-      (o) => o.id == order.id,
-      orElse: () => order,
+    final currentOrderIndex = adminOrderState.orders.indexWhere(
+      (o) => o.id == orderId,
     );
 
-    final user = adminOrderState.users.firstWhere(
-      (user) => user.id == currentOrder.userId,
-      orElse: () => User(
-        id: currentOrder.userId,
-        name: currentOrder.shippingAddress.fullName,
-        email: currentOrder.shippingAddress.email,
-        phoneNumber: currentOrder.shippingAddress.phoneNumber,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ),
-    );
+    if (currentOrderIndex == -1 && initialOrder == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final currentOrder = currentOrderIndex != -1
+        ? adminOrderState.orders[currentOrderIndex]
+        : initialOrder!;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('Order #${order.id.substring(0, 8)}'),
+        title: Text('Order #${orderId.substring(0, 8)}'),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -61,7 +61,7 @@ class OrderDetailsScreen extends ConsumerWidget {
               _buildShipmentInfo(currentOrder),
             ],
             const SizedBox(height: 24),
-            _buildCustomerInfo(user, currentOrder),
+            _buildCustomerInfo(currentOrder),
             const SizedBox(height: 24),
             _buildOrderItems(currentOrder),
             const SizedBox(height: 24),
@@ -70,7 +70,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             // _buildStatusUpdateSection(context, ref, currentOrder),
             _buildFulfillButton(context, currentOrder),
             const SizedBox(height: 24),
-            _buildActionButtons(context, ref, user, currentOrder),
+            _buildActionButtons(context, ref, currentOrder),
           ],
         ),
       ),
@@ -80,7 +80,6 @@ class OrderDetailsScreen extends ConsumerWidget {
   Widget _buildActionButtons(
     BuildContext context,
     WidgetRef ref,
-    User user,
     Order currentOrder,
   ) {
     final bool canFulfill = currentOrder.status == OrderStatus.confirmed;
@@ -104,7 +103,8 @@ class OrderDetailsScreen extends ConsumerWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   context.goNamed(
-                    RouteEndpoint.fullfillOrder,
+                    RouteEndpoint.fullfillOrder.split('/').first,
+                    pathParameters: {'id': currentOrder.id},
                     extra: currentOrder,
                   );
                 },
@@ -126,12 +126,8 @@ class OrderDetailsScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showCancelConfirmationDialog(
-                context,
-                ref,
-                user,
-                currentOrder,
-              ),
+              onPressed: () =>
+                  _showCancelConfirmationDialog(context, ref, currentOrder),
               icon: const Icon(Icons.cancel, color: Colors.white),
               label: Text(
                 currentOrder.status == OrderStatus.confirmed
@@ -158,7 +154,6 @@ class OrderDetailsScreen extends ConsumerWidget {
   void _showCancelConfirmationDialog(
     BuildContext context,
     WidgetRef ref,
-    User user,
     Order currentOrder,
   ) {
     showDialog(
@@ -176,13 +171,13 @@ class OrderDetailsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'This will CANCEL the order and issue a FULL refund of \$${order.total.toStringAsFixed(2)} to the customer.',
+              'This will CANCEL the order and issue a FULL refund of \$${currentOrder.total.toStringAsFixed(2)} to the customer.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
             Text(
-              'Order #${order.id.substring(0, 8)}',
+              'Order #${currentOrder.id.substring(0, 8)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -196,7 +191,7 @@ class OrderDetailsScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.pop(ctx); // close dialog
-              _processRefund(context, ref, user);
+              _processRefund(context, ref, currentOrder);
             },
             child: const Text(
               'Yes, Cancel & Refund',
@@ -211,7 +206,7 @@ class OrderDetailsScreen extends ConsumerWidget {
   Future<void> _processRefund(
     BuildContext context,
     WidgetRef ref,
-    User user,
+    Order currentOrder,
   ) async {
     // Show loading
     ScaffoldMessenger.of(context).showSnackBar(
@@ -225,9 +220,9 @@ class OrderDetailsScreen extends ConsumerWidget {
       final result = await FirebaseFunctions.instance
           .httpsCallable('refundOrder')
           .call({
-            'paymentIntentId': order.paymentIntentId,
+            'paymentIntentId': currentOrder.paymentIntentId,
             // 'paymentIntentId': "pi_3SU1y32IE5e3lR4S1qATTF7D",
-            /// 'amount': (order.total * 100).toInt(),  Uncomment for [partial refund]
+            /// 'amount': (currentOrder.total * 100).toInt(),  Uncomment for [partial refund]
             'reason': 'requested_by_customer',
           });
 
@@ -235,11 +230,11 @@ class OrderDetailsScreen extends ConsumerWidget {
         // Optional: Update order status to cancelled
         await ref
             .read(adminOrderProvider.notifier)
-            .updateOrderStatus(order.id, OrderStatus.cancelled);
+            .updateOrderStatus(currentOrder.id, OrderStatus.cancelled);
 
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
-            .doc(order.userId)
+            .doc(currentOrder.userId)
             .get();
 
         final fcmToken = userDoc.data()?['fcmToken'] as String?;
@@ -250,9 +245,9 @@ class OrderDetailsScreen extends ConsumerWidget {
                 .httpsCallable('sendRefundNotification')
                 .call({
                   'fcmToken': fcmToken,
-                  'orderId': order.id,
-                  'customerName': user.name ?? order.shippingAddress.fullName,
-                  'totalAmount': order.total.toStringAsFixed(2),
+                  'orderId': currentOrder.id,
+                  'customerName': currentOrder.shippingAddress.fullName,
+                  'totalAmount': currentOrder.total.toStringAsFixed(2),
                 });
             DPrint.log("Refund notification sent successfully");
           } catch (e) {
@@ -261,7 +256,7 @@ class OrderDetailsScreen extends ConsumerWidget {
           }
         } else {
           DPrint.log(
-            "No FCM token found for user ${order.userId}, skipping notification",
+            "No FCM token found for user ${currentOrder.userId}, skipping notification",
           );
         }
 
@@ -479,7 +474,8 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCustomerInfo(User user, Order currentOrder) {
+  Widget _buildCustomerInfo(Order currentOrder) {
+    final shippingAddress = currentOrder.shippingAddress;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -502,18 +498,18 @@ class OrderDetailsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            user.name ?? 'Unknown User',
+            shippingAddress.fullName,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
-            user.email,
+            shippingAddress.email,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
-          if (user.phoneNumber != null) ...[
+          if (shippingAddress.phoneNumber.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              user.phoneNumber!,
+              shippingAddress.phoneNumber,
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
@@ -618,7 +614,8 @@ class OrderDetailsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (index < order.items.length - 1) const Divider(height: 24),
+                if (index < currentOrder.items.length - 1)
+                  const Divider(height: 24),
               ],
             );
           }),
@@ -682,7 +679,11 @@ class OrderDetailsScreen extends ConsumerWidget {
     return Center(
       child: ElevatedButton.icon(
         onPressed: () {
-          context.goNamed(RouteEndpoint.fullfillOrder, extra: currentOrder);
+          context.goNamed(
+            RouteEndpoint.fullfillOrder.split('/').first,
+            pathParameters: {'id': currentOrder.id},
+            extra: currentOrder,
+          );
         },
         icon: const Icon(
           Icons.local_shipping,
@@ -704,7 +705,11 @@ class OrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusUpdateSection(BuildContext context, WidgetRef ref) {
+  Widget _buildStatusUpdateSection(
+    BuildContext context,
+    WidgetRef ref,
+    Order currentOrder,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -743,10 +748,10 @@ class OrderDetailsScreen extends ConsumerWidget {
                 ],
               ),
               value: status,
-              groupValue: order.status,
+              groupValue: currentOrder.status,
               onChanged: (value) {
                 if (value != null) {
-                  _updateOrderStatus(context, ref, order.id, value);
+                  _updateOrderStatus(context, ref, currentOrder.id, value);
                 }
               },
             ),

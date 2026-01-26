@@ -40,8 +40,8 @@ class RouteEndpoint {
 
   // Order routes
   static const String orders = '/orders';
-  static const String ordersDetails = 'orders-details';
-  static const String fullfillOrder = 'ful-fill-Order';
+  static const String ordersDetails = 'orders-details/:id';
+  static const String fullfillOrder = 'ful-fill-Order/:id';
 
   // Promo routes
   static const String promos = '/promos';

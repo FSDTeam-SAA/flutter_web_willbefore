@@ -12,8 +12,13 @@ import '../providers/order_provider.dart';
 import '../providers/send_shipment_notification.dart';
 
 class FullfillOrderScreen extends ConsumerStatefulWidget {
-  final Order order;
-  const FullfillOrderScreen({super.key, required this.order});
+  final String orderId;
+  final Order? initialOrder;
+  const FullfillOrderScreen({
+    super.key,
+    required this.orderId,
+    this.initialOrder,
+  });
 
   @override
   ConsumerState<FullfillOrderScreen> createState() =>
@@ -38,21 +43,41 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   String _distanceUnit = 'in';
   String _massUnit = 'oz';
 
+  Order? _order;
+  bool _initialized = false;
+
   @override
   void initState() {
     super.initState();
     _lengthController = TextEditingController(text: '10');
     _widthController = TextEditingController(text: '6');
     _heightController = TextEditingController(text: '4');
+    _weightController = TextEditingController(text: '8.0');
 
-    // Calculate initial weight from order items
-    final totalWeightOz = widget.order.items.fold<double>(
+    // Initial attempt to find order
+    final adminState = ref.read(adminOrderProvider);
+    final index = adminState.orders.indexWhere((o) => o.id == widget.orderId);
+    if (index != -1) {
+      _order = adminState.orders[index];
+      _initializeControllers();
+    } else if (widget.initialOrder != null) {
+      _order = widget.initialOrder;
+      _initializeControllers();
+    }
+  }
+
+  void _initializeControllers() {
+    if (_initialized || _order == null) return;
+
+    // Update weight based on items
+    final totalWeightOz = _order!.items.fold<double>(
       0,
       (sum, item) => sum + (item.product.weightOz) * item.quantity,
     );
-    // If calculated weight is 0, default to 8 oz
     final initialWeight = totalWeightOz > 0 ? totalWeightOz : 8.0;
-    _weightController = TextEditingController(text: initialWeight.toString());
+    _weightController.text = initialWeight.toString();
+
+    _initialized = true;
   }
 
   @override
@@ -142,18 +167,18 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       // ---- 3. TO address ---------------------------------------------------------
       final toAddr = await _shippo.createAddress(
-        name: widget.order.shippingAddress.fullName,
-        street1: widget.order.shippingAddress.addressLine1,
-        city: widget.order.shippingAddress.city,
-        state: widget.order.shippingAddress.state,
-        zip: widget.order.shippingAddress.postalCode,
-        country: widget.order.shippingAddress.country,
-        phone: widget.order.shippingAddress.phoneNumber,
-        email: widget.order.shippingAddress.email,
+        name: _order!.shippingAddress.fullName,
+        street1: _order!.shippingAddress.addressLine1,
+        city: _order!.shippingAddress.city,
+        state: _order!.shippingAddress.state,
+        zip: _order!.shippingAddress.postalCode,
+        country: _order!.shippingAddress.country,
+        phone: _order!.shippingAddress.phoneNumber,
+        email: _order!.shippingAddress.email,
       );
 
       final bool isCustomerUS =
-          widget.order.shippingAddress.country.toUpperCase() == 'US';
+          _order!.shippingAddress.country.toUpperCase() == 'US';
       if (!_isValidAddress(toAddr, isUS: isCustomerUS)) {
         String msg;
         try {
@@ -203,7 +228,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       if (!isDomesticUS) {
         final List<String> customsItemIds = [];
-        for (final item in widget.order.items) {
+        for (final item in _order!.items) {
           final itemId = await _shippo.createCustomsItem(
             description: item.product.title, // using title from Product entity
             quantity: item.quantity.toDouble(),
@@ -294,7 +319,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
       final success = await ref
           .read(adminOrderProvider.notifier)
           .fulfillOrder(
-            orderId: widget.order.id,
+            orderId: _order!.id,
             trackingNumber: transaction['tracking_number'],
             trackingUrl: transaction['tracking_url_provider'],
             labelUrl: transaction['label_url'],
@@ -314,8 +339,8 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
       // ---- 10. Send Notification --------------------------------------------------
       await sendShipmentNotification(
-        orderId: widget.order.id,
-        userId: widget.order.userId,
+        orderId: _order!.id,
+        userId: _order!.userId,
         trackingNumber: transaction['tracking_number'],
         trackingUrl: transaction['tracking_url_provider'],
         labelUrl: transaction['label_url'],
@@ -330,11 +355,49 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
         );
       }
     } catch (e) {
-      setState(() => _error = e.toString());
+      setState(() => _error = _getFriendlyErrorMessage(e));
       DPrint.error('Fulfill Error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _getFriendlyErrorMessage(dynamic error) {
+    final String errorStr = error.toString();
+
+    // Handle common Shippo/Technical errors
+    if (errorStr.contains('Warehouse address not configured')) {
+      return 'Please set up your warehouse address in Admin Settings first.';
+    }
+    if (errorStr.contains('Please enter valid numeric values')) {
+      return 'Ensure dimensions and weight are valid positive numbers.';
+    }
+    if (errorStr.contains('No shipping rates returned')) {
+      return 'No shipping rates found. Please check both warehouse and customer addresses.';
+    }
+
+    // Try to parse JSON errors from Shippo
+    try {
+      if (errorStr.contains('Exception:')) {
+        final jsonPart = errorStr.split('Exception: ').last;
+        final data = jsonDecode(jsonPart);
+        if (data is Map) {
+          if (data.containsKey('messages')) {
+            final messages = data['messages'] as List;
+            return messages.map((m) => m['text'] ?? m.toString()).join('\n');
+          }
+          if (data.containsKey('detail')) return data['detail'];
+          if (data.containsKey('message')) return data['message'];
+        }
+      }
+    } catch (_) {}
+
+    // Fallback cleaning
+    return errorStr
+        .replaceAll('Exception: ', '')
+        .replaceAll('Parcel Error: ', '')
+        .replaceAll('Shipment Error: ', '')
+        .replaceAll('Address Error: ', '');
   }
 
   // --------------------------------------------------------------
@@ -342,7 +405,25 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
   // --------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
+    // Listen for state changes to find the order if not already found
+    ref.listen(adminOrderProvider, (previous, next) {
+      if (_order == null) {
+        final index = next.orders.indexWhere((o) => o.id == widget.orderId);
+        if (index != -1) {
+          setState(() {
+            _order = next.orders[index];
+            _initializeControllers();
+          });
+        }
+      }
+    });
+
     final warehouseState = ref.watch(warehouseProvider);
+
+    // If order is still loading from database
+    if (_order == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     // Loading warehouse address
     if (warehouseState.isLoading) {
@@ -364,7 +445,7 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Fulfill Order #${widget.order.id.substring(0, 8)}'),
+        title: Text('Fulfill Order #${_order!.id.substring(0, 8)}'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -439,17 +520,43 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
               ),
             ],
 
-            // Error UI
             if (_error != null)
               Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 24),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red[200]!),
                 ),
-                child: Text(
-                  'Error: $_error',
-                  style: const TextStyle(color: Colors.red),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Fulfillment Issue',
+                          style: TextStyle(
+                            color: Colors.red[900],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: TextStyle(color: Colors.red[800], height: 1.4),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -479,12 +586,12 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(widget.order.shippingAddress.fullName),
-          Text(widget.order.shippingAddress.addressLine1),
+          Text(_order!.shippingAddress.fullName),
+          Text(_order!.shippingAddress.addressLine1),
           Text(
-            '${widget.order.shippingAddress.city}, ${widget.order.shippingAddress.state} ${widget.order.shippingAddress.postalCode}',
+            '${_order!.shippingAddress.city}, ${_order!.shippingAddress.state} ${_order!.shippingAddress.postalCode}',
           ),
-          Text(widget.order.shippingAddress.country),
+          Text(_order!.shippingAddress.country),
         ],
       ),
     );
