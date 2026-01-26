@@ -89,7 +89,7 @@ class OrderDetailsScreen extends ConsumerWidget {
       OrderStatus.cancelled,
     ].contains(currentOrder.status);
 
-    DPrint.log('Order Status: ${canRefund}');
+    DPrint.log('Order Status: $canRefund');
 
     if (!canFulfill && !canRefund) return const SizedBox.shrink();
 
