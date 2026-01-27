@@ -1503,7 +1503,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 controller: _colorNameController,
                 style: TextStyle(),
                 decoration: InputDecoration(
-                  hintText: 'Enter a color code...',
+                  hintText: 'Enter a color name',
                   hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

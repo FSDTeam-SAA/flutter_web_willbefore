@@ -291,7 +291,15 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please correct the errors in the form.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     final formData = ref.read(editProductFormProvider(widget.productId));
     final totalImages =
@@ -307,8 +315,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       return;
     }
 
-    // Get HTML content from editor
-    final description = await _htmlController.getText();
+    // Get HTML content from form data (saved when dialog closes)
+    final description = formData.description;
 
     final facilities = <String, dynamic>{};
     if (formData.overOrderDiscount.isNotEmpty) {
@@ -320,49 +328,84 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       facilities['freeReturnDays'] = int.tryParse(formData.freeReturnDays);
     }
 
-    final request = UpdateProductRequest(
-      id: formData.id,
-      title: formData.title.trim(),
-      description: description,
-      actualPrice: double.parse(formData.actualPrice),
-      discountPrice: formData.discountPrice.isNotEmpty
-          ? double.parse(formData.discountPrice)
-          : null,
-      stock: int.parse(formData.stock),
-      categoryId: formData.selectedCategoryId!,
-      promoId: formData.selectedPromoId,
-      sizes: formData.selectedSizes,
-      colors: formData.selectedColors.map((c) => c.name).toList(),
-      colorCodes: formData.selectedColors
-          .map((c) => c.color.value.toRadixString(16))
-          .toList(),
-      newImages: formData.selectedImages
-          .map((img) => ProductImageData(bytes: img.bytes, name: img.name))
-          .toList(),
-      existingImageUrls: formData.existingImageUrls,
-      facilities: facilities.isNotEmpty ? facilities : null,
-    );
-
-    final success = await ref
-        .read(productsProvider.notifier)
-        .updateProduct(request);
-
-    if (success && mounted) {
-      context.go(RouteEndpoint.products);
+    // Double check numeric parsing for critical fields
+    double? actualPrice = double.tryParse(formData.actualPrice);
+    if (actualPrice == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Product updated successfully!'),
-          backgroundColor: AppColors.primaryLaurel,
-        ),
-      );
-    } else if (mounted) {
-      final errorMessage = ref.read(productsProvider).errorMessage;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage ?? 'Failed to update product'),
+          content: Text('Invalid Actual Price'),
           backgroundColor: Colors.red,
         ),
       );
+      return;
+    }
+
+    int? stock = int.tryParse(formData.stock);
+    if (stock == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid Stock Value'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final request = UpdateProductRequest(
+        id: formData.id,
+        title: formData.title.trim(),
+        description: description,
+        actualPrice: actualPrice,
+        discountPrice: formData.discountPrice.isNotEmpty
+            ? double.tryParse(formData.discountPrice)
+            : null,
+        stock: stock,
+        categoryId: formData.selectedCategoryId!,
+        promoId: formData.selectedPromoId,
+        sizes: formData.selectedSizes,
+        colors: formData.selectedColors.map((c) => c.name).toList(),
+        colorCodes: formData.selectedColors
+            .map((c) => c.color.value.toRadixString(16))
+            .toList(),
+        newImages: formData.selectedImages
+            .map((img) => ProductImageData(bytes: img.bytes, name: img.name))
+            .toList(),
+        existingImageUrls: formData.existingImageUrls,
+        facilities: facilities.isNotEmpty ? facilities : null,
+      );
+
+      final success = await ref
+          .read(productsProvider.notifier)
+          .updateProduct(request);
+
+      if (success && mounted) {
+        context.go(RouteEndpoint.products);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Product updated successfully!'),
+            backgroundColor: AppColors.primaryLaurel,
+          ),
+        );
+      } else if (mounted) {
+        final errorMessage = ref.read(productsProvider).errorMessage;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage ?? 'Failed to update product'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("EXCEPTION in _submit: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating product: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -546,7 +589,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 false,
               ),
               const SizedBox(height: 16),
-              _buildPriceField('Stocks', _stockController, true),
+              _buildPriceField(
+                'Stocks',
+                _stockController,
+                true,
+                isInteger: true,
+              ),
             ],
           );
         }
@@ -569,7 +617,14 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(child: _buildPriceField('Stocks', _stockController, true)),
+            Expanded(
+              child: _buildPriceField(
+                'Stocks',
+                _stockController,
+                true,
+                isInteger: true,
+              ),
+            ),
           ],
         );
       },
@@ -579,8 +634,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   Widget _buildPriceField(
     String label,
     TextEditingController controller,
-    bool required,
-  ) {
+    bool required, {
+    bool isInteger = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -626,8 +682,14 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter $label';
                   }
-                  if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                  if (isInteger) {
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid integer';
+                    }
+                  } else {
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
                   }
                   return null;
                 }
@@ -724,7 +786,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           )
         else
           DropdownButtonFormField<String>(
-            initialValue: formData.selectedCategoryId,
+            value:
+                categoriesState.categories.any(
+                  (c) => c.id == formData.selectedCategoryId,
+                )
+                ? formData.selectedCategoryId
+                : null,
             style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: 'Select a categories',
@@ -809,7 +876,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           )
         else
           DropdownButtonFormField<String>(
-            initialValue: formData.selectedPromoId,
+            value:
+                promosState.promos.any((p) => p.id == formData.selectedPromoId)
+                ? formData.selectedPromoId
+                : null,
             style: TextStyle(color: AppColors.textAppBlack),
             decoration: InputDecoration(
               hintText: promosState.promos.isEmpty
@@ -957,8 +1027,17 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   }
 
   Future<void> _openHtmlEditorDialog() async {
+    final formData = ref.read(editProductFormProvider(widget.productId));
+
     // Start with a clean editor
     _htmlController.clear();
+
+    // Set initial text from formData
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (formData.description.isNotEmpty) {
+        _htmlController.setText(formData.description);
+      }
+    });
 
     await showDialog(
       context: context,
@@ -980,8 +1059,15 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               TextButton(
                 onPressed: () async {
                   try {
-                    final text = await _htmlController.getText() ?? '';
-                    String cleanText = text.trim();
+                    // Check if mounted before async operation
+                    if (!mounted) return;
+
+                    final text = await _htmlController.getText();
+
+                    // Check mounted again after await
+                    if (!mounted) return;
+
+                    String cleanText = (text ?? '').trim();
 
                     // Remove empty <p> tags
                     if (cleanText == '<p><br></p>' ||
@@ -990,18 +1076,19 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                       cleanText = '';
                     }
 
-                    if (mounted) {
-                      ref
-                          .read(
-                            editProductFormProvider(widget.productId).notifier,
-                          )
-                          .updateDescription(cleanText);
-                    }
+                    ref
+                        .read(
+                          editProductFormProvider(widget.productId).notifier,
+                        )
+                        .updateDescription(cleanText);
+
+                    Navigator.of(dialogContext).pop();
+                    // Do NOT clear controller here as widget is disposed
                   } catch (e) {
                     debugPrint('getText failed: $e');
-                  } finally {
-                    Navigator.of(dialogContext).pop();
-                    _htmlController.clear();
+                    if (mounted) {
+                      Navigator.of(dialogContext).pop();
+                    }
                   }
                 },
                 child: Text(
@@ -1031,7 +1118,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     htmlEditorOptions: HtmlEditorOptions(
                       hint: "Edit your product description here...",
                       shouldEnsureVisible: true,
-                      initialText: "<p></p>", // clean start
+                      initialText: formData.description.isEmpty
+                          ? "<p></p>"
+                          : formData.description, // Attempt direct init
                       autoAdjustHeight: false,
                     ),
                     htmlToolbarOptions: HtmlToolbarOptions(
@@ -1071,17 +1160,6 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         ),
       ),
     );
-
-    // Load the current description **after** the dialog is built
-    // if (mounted) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) async {
-    //     try {
-    //       // await _htmlController.setText(currentText.isEmpty ? "<p></p>" : currentText);
-    //     } catch (e) {
-    //       debugPrint("setText failed (mobile fallback): $e");
-    //     }
-    //   });
-    // }
   }
 
   Widget _buildFacilitiesSection() {
@@ -1153,6 +1231,61 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     );
   }
 
+  void _removeImageAt(int index) {
+    final formData = ref.read(editProductFormProvider(widget.productId));
+    if (index < formData.existingImageUrls.length) {
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .removeExistingImage(index);
+    } else {
+      ref
+          .read(editProductFormProvider(widget.productId).notifier)
+          .removeImage(index - formData.existingImageUrls.length);
+    }
+  }
+
+  Future<void> _replaceMainImage() async {
+    final formData = ref.read(editProductFormProvider(widget.productId));
+    // Check if main image exists (index 0)
+    final totalImages =
+        formData.selectedImages.length + formData.existingImageUrls.length;
+    if (totalImages == 0) {
+      _pickImages(); // Just pick if empty
+      return;
+    }
+
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (file.bytes != null) {
+          // Remove index 0
+          _removeImageAt(0);
+
+          // Add new image
+          final newImage = ProductImage(bytes: file.bytes!, name: file.name);
+          ref
+              .read(editProductFormProvider(widget.productId).notifier)
+              .addImages([newImage]);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error replacing image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildImageSection() {
     final formData = ref.watch(editProductFormProvider(widget.productId));
     final totalImages =
@@ -1173,7 +1306,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
         // Main Upload Area
         GestureDetector(
-          onTap: _pickImages,
+          onTap: totalImages == 0
+              ? _pickImages
+              : null, // Disable main click if image exists
           child: Container(
             height: 200,
             decoration: BoxDecoration(
@@ -1184,30 +1319,76 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: totalImages > 0
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: formData.existingImageUrls.isNotEmpty
-                        ? Image.network(
-                            formData.existingImageUrls.first,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: 48,
-                                  color: Colors.grey,
+                ? Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: formData.existingImageUrls.isNotEmpty
+                            ? Image.network(
+                                formData.existingImageUrls.first,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 48,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.memory(
+                                formData.selectedImages.first.bytes,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                      ),
+                      // Controls for Main Image
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Row(
+                          children: [
+                            // Edit / Replace Button
+                            GestureDetector(
+                              onTap: _replaceMainImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  shape: BoxShape.circle,
                                 ),
-                              );
-                            },
-                          )
-                        : Image.memory(
-                            formData.selectedImages.first.bytes,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 18,
+                                  color: AppColors.primaryLaurel,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Remove Button
+                            GestureDetector(
+                              onTap: () => _removeImageAt(0),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   )
                 : Center(
                     child: Column(
@@ -1620,7 +1801,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 controller: _colorNameController,
                 style: TextStyle(),
                 decoration: InputDecoration(
-                  hintText: 'Enter a color code...',
+                  hintText: 'Enter a color name',
                   hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
