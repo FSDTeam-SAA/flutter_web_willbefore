@@ -232,58 +232,142 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         .addCustomSize();
   }
 
-  final selectedColorProvider = StateProvider<Color>((ref) => Colors.red);
-
   Future<void> _addCustomColor() async {
-    final formData = ref.read(editProductFormProvider(widget.productId));
-
-    if (formData.customColorName.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a color name first'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
     Color selectedColor = Colors.red;
+    _colorNameController.clear(); // Clear before adding
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          'Pick Color for "${formData.customColorName}"',
+        title: const Text(
+          'Add Custom Color',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: selectedColor,
-            onColorChanged: (color) {
-              ref.read(selectedColorProvider.notifier).state = color;
-            },
-            pickerAreaHeightPercent: 0.8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _colorNameController,
+                decoration: InputDecoration(
+                  labelText: 'Color Name',
+                  hintText: 'e.g., Sky Blue',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ColorPicker(
+                pickerColor: selectedColor,
+                onColorChanged: (color) => selectedColor = color,
+                pickerAreaHeightPercent: 0.8,
+              ),
+            ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel', style: TextStyle()),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              final name = _colorNameController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a color name'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
               ref
                   .read(editProductFormProvider(widget.productId).notifier)
-                  .addCustomColor(
-                    formData.customColorName.trim(),
-                    selectedColor,
-                  );
+                  .addCustomColor(name, selectedColor);
               Navigator.of(context).pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryLaurel,
             ),
-            child: Text('Set Color', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Add Color',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editCustomColor(int index) async {
+    final formData = ref.read(editProductFormProvider(widget.productId));
+    if (index < 0 || index >= formData.selectedColors.length) return;
+
+    final currentColor = formData.selectedColors[index];
+    _colorNameController.text = currentColor.name;
+
+    Color selectedColor = currentColor.color;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Edit Color "${currentColor.name}"',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _colorNameController,
+                decoration: InputDecoration(
+                  labelText: 'Color Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ColorPicker(
+                pickerColor: selectedColor,
+                onColorChanged: (color) => selectedColor = color,
+                pickerAreaHeightPercent: 0.8,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = _colorNameController.text.trim();
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a color name'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .updateColor(index, name, selectedColor);
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLaurel,
+            ),
+            child: const Text(
+              'Update Color',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -1794,53 +1878,23 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _colorNameController,
-                style: TextStyle(),
-                decoration: InputDecoration(
-                  hintText: 'Enter a color name',
-                  hintStyle: TextStyle(color: AppColors.textSecondaryHintColor),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.borderColor),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.primaryLaurel,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _addCustomColor,
+            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+            label: const Text(
+              'Add Custom Color',
+              style: TextStyle(color: Colors.white),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLaurel,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: _addCustomColor,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryLaurel,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-              child: Text('Set', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+          ),
         ),
 
         const SizedBox(height: 16),
@@ -1887,6 +1941,15 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: AppColors.textAppBlack,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _editCustomColor(index),
+                      child: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: AppColors.primaryLaurel,
                       ),
                     ),
                     const SizedBox(width: 8),

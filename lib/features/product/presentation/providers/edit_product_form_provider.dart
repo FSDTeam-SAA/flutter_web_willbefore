@@ -83,10 +83,20 @@ class EditProductFormData {
 
 // Edit Product Form State Notifier
 class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
-  EditProductFormNotifier(String productId) : super(EditProductFormData(id: productId));
+  EditProductFormNotifier(String productId)
+    : super(EditProductFormData(id: productId));
 
   // Default sizes and colors (same as add form)
-  static const List<String> defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
+  static const List<String> defaultSizes = [
+    'XS',
+    'S',
+    'M',
+    'L',
+    'XL',
+    'XXL',
+    '2XL',
+    '3XL',
+  ];
   static const List<ProductColor> defaultColors = [
     ProductColor(name: 'Red', color: Colors.red),
     ProductColor(name: 'Black', color: Colors.black),
@@ -108,7 +118,7 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
     for (int i = 0; i < product.colors.length; i++) {
       final colorName = product.colors[i];
       Color color = Colors.grey; // Default color
-      
+
       if (i < product.colorCodes.length) {
         try {
           final colorCode = product.colorCodes[i];
@@ -117,7 +127,7 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
           // Use default color if parsing fails
         }
       }
-      
+
       productColors.add(ProductColor(name: colorName, color: color));
     }
 
@@ -132,7 +142,8 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
       selectedPromoId: product.promoId,
       selectedSizes: List.from(product.sizes),
       selectedColors: productColors,
-      overOrderDiscount: product.facilities?['overOrderDiscount']?.toString() ?? '',
+      overOrderDiscount:
+          product.facilities?['overOrderDiscount']?.toString() ?? '',
       freeReturnDays: product.facilities?['freeReturnDays']?.toString() ?? '',
       existingImageUrls: List.from(product.imageUrls),
     );
@@ -185,9 +196,10 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
   void addImages(List<ProductImage> newImages) {
     final currentImages = List<ProductImage>.from(state.selectedImages);
     final totalImages = currentImages.length + state.existingImageUrls.length;
-    
+
     for (var image in newImages) {
-      if (totalImages + currentImages.length - state.selectedImages.length < maxImages) {
+      if (totalImages + currentImages.length - state.selectedImages.length <
+          maxImages) {
         currentImages.add(image);
       }
     }
@@ -216,10 +228,7 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
       final sizes = List<String>.from(state.selectedSizes);
       if (!sizes.contains(size)) {
         sizes.add(size);
-        state = state.copyWith(
-          selectedSizes: sizes,
-          customSize: '',
-        );
+        state = state.copyWith(selectedSizes: sizes, customSize: '');
       }
     }
   }
@@ -253,19 +262,18 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
 
   void addCustomColor(String colorName, Color color) {
     final colors = List<ProductColor>.from(state.selectedColors);
-    final existingIndex = colors.indexWhere((c) => c.name.toLowerCase() == colorName.toLowerCase());
-    
+    final existingIndex = colors.indexWhere(
+      (c) => c.name.toLowerCase() == colorName.toLowerCase(),
+    );
+
     final newColor = ProductColor(name: colorName, color: color);
     if (existingIndex != -1) {
       colors[existingIndex] = newColor;
     } else {
       colors.add(newColor);
     }
-    
-    state = state.copyWith(
-      selectedColors: colors,
-      customColorName: '',
-    );
+
+    state = state.copyWith(selectedColors: colors, customColorName: '');
   }
 
   void removeColor(int index) {
@@ -276,12 +284,25 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
     }
   }
 
+  void updateColor(int index, String colorName, Color color) {
+    final colors = List<ProductColor>.from(state.selectedColors);
+    if (index >= 0 && index < colors.length) {
+      colors[index] = ProductColor(name: colorName, color: color);
+      state = state.copyWith(selectedColors: colors);
+    }
+  }
+
   void reset(String productId) {
     state = EditProductFormData(id: productId);
   }
 }
 
 // Provider factory for edit product form
-final editProductFormProvider = StateNotifierProvider.family<EditProductFormNotifier, EditProductFormData, String>((ref, productId) {
-  return EditProductFormNotifier(productId);
-});
+final editProductFormProvider =
+    StateNotifierProvider.family<
+      EditProductFormNotifier,
+      EditProductFormData,
+      String
+    >((ref, productId) {
+      return EditProductFormNotifier(productId);
+    });

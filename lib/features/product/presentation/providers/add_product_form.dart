@@ -260,6 +260,14 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
     }
   }
 
+  void updateColor(int index, String colorName, Color color) {
+    final colors = List<ProductColor>.from(state.selectedColors);
+    if (index >= 0 && index < colors.length) {
+      colors[index] = ProductColor(name: colorName, color: color);
+      state = state.copyWith(selectedColors: colors);
+    }
+  }
+
   void reset() {
     state = const ProductFormData();
   }
