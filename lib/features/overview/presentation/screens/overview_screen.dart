@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_willbefore/core/constants/app_colors.dart';
 import 'package:flutx_core/flutx_core.dart';
 import '../../../../core/services/stripe_service.dart';
-import '../../../../data/dummy_data.dart'; // For fallback data only
+// import '../../../../data/dummy_data.dart'; // No longer used for fallbacks
 import '../../../../models/dashboard_models.dart';
 import '../../../product/presentation/providers/products_providers.dart';
 import '../../../userProfile/presentation/provider/all_user_provider.dart';
@@ -47,95 +47,154 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
   }
 
   // Calculate timestamps based on filter
-  Map<String, int> _getTimeRange(String filter) {
+  Map<String, dynamic> _getTimeRange(String filter) {
     final now = DateTime.now();
-    int intervalStart;
-    int intervalEnd;
+    DateTime startDate;
 
     switch (filter) {
       case 'Day':
-        intervalStart =
-            now.subtract(const Duration(days: 1)).millisecondsSinceEpoch ~/
-            1000;
-        intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
+        startDate = DateTime(now.year, now.month, now.day);
         break;
       case 'Week':
-        intervalStart =
-            now.subtract(const Duration(days: 7)).millisecondsSinceEpoch ~/
-            1000;
-        intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
+        startDate = now.subtract(Duration(days: now.weekday - 1));
+        startDate = DateTime(startDate.year, startDate.month, startDate.day);
         break;
       case 'Month':
-        intervalStart =
-            now.subtract(const Duration(days: 30)).millisecondsSinceEpoch ~/
-            1000;
-        intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
+        startDate = DateTime(now.year, now.month, 1);
         break;
       case 'Year':
       default:
-        intervalStart =
-            now.subtract(const Duration(days: 365)).millisecondsSinceEpoch ~/
-            1000;
-        intervalEnd = now.millisecondsSinceEpoch ~/ 1000;
+        startDate = DateTime(now.year, 1, 1);
         break;
     }
 
-    return {'interval_start': intervalStart, 'interval_end': intervalEnd};
+    return {
+      'start_date': startDate,
+      'interval_start': startDate.millisecondsSinceEpoch ~/ 1000,
+      'interval_end': now.millisecondsSinceEpoch ~/ 1000,
+    };
   }
 
   // Fetch revenue data from Stripe charges
   Future<void> _fetchRevenueData() async {
+    if (!mounted) return;
     setState(() {
       _isLoadingRevenue = true;
     });
 
     try {
       final timeRange = _getTimeRange(_revenueFilter);
+      final startDate = timeRange['start_date'] as DateTime;
+
+      // Fetch charges. Note: Stripe API might require pagination for very large datasets,
+      // but for a dashboard overview, a reasonable limit is usually sufficient for recent trends.
       final charges = await StripeService.fetchCharges(
-        limit: 100, // Adjust as needed for pagination
-        status: 'succeeded', // Only successful charges contribute to revenue
+        limit: 100,
+        status: 'succeeded',
         created: {
           'gte': timeRange['interval_start']!,
           'lte': timeRange['interval_end']!,
         },
       );
 
+      final Map<String, double> revenueMap = {};
+      final List<String> labels = [];
+
+      // Initialize labels based on filter
+      if (_revenueFilter == 'Day') {
+        for (int i = 0; i <= 23; i++) {
+          String label = i.toString().padLeft(2, '0');
+          labels.add(label);
+          revenueMap[label] = 0.0;
+        }
+      } else if (_revenueFilter == 'Week') {
+        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        labels.addAll(weekDays);
+        for (var day in weekDays) revenueMap[day] = 0.0;
+      } else if (_revenueFilter == 'Month') {
+        final daysInMonth = DateTime(
+          startDate.year,
+          startDate.month + 1,
+          0,
+        ).day;
+        for (int i = 1; i <= daysInMonth; i++) {
+          String label = i.toString();
+          labels.add(label);
+          revenueMap[label] = 0.0;
+        }
+      } else {
+        // Year
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        labels.addAll(months);
+        for (var month in months) revenueMap[month] = 0.0;
+      }
+
       double total = 0.0;
-      final List<ChartData> chartData = [];
-
       for (var charge in charges ?? []) {
-        if (charge['status'] == 'succeeded') {
-          final amount =
-              (charge['amount'] as int) / 100.0; // Convert cents to dollars
-          total += amount;
+        final amount = (charge['amount'] as int) / 100.0;
+        total += amount;
 
-          final timestamp = charge['created'] as int;
-          final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-          String label;
+        final timestamp = charge['created'] as int;
+        final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+        String label;
 
-          switch (_revenueFilter) {
-            case 'Day':
-              label = '${date.hour}:00';
-              break;
-            case 'Week':
-              label = date.day.toString();
-              break;
-            case 'Month':
-              label = date.day.toString();
-              break;
-            case 'Year':
-            default:
-              label = date.month.toString();
-              break;
-          }
-          chartData.add(ChartData(label: label, value: amount));
+        switch (_revenueFilter) {
+          case 'Day':
+            label = date.hour.toString().padLeft(2, '0');
+            break;
+          case 'Week':
+            const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            label = weekDays[date.weekday - 1];
+            break;
+          case 'Month':
+            label = date.day.toString();
+            break;
+          case 'Year':
+          default:
+            const months = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+            label = months[date.month - 1];
+            break;
+        }
+
+        if (revenueMap.containsKey(label)) {
+          revenueMap[label] = revenueMap[label]! + amount;
         }
       }
+
+      final List<ChartData> chartData = labels
+          .map((label) => ChartData(label: label, value: revenueMap[label]!))
+          .toList();
 
       if (!mounted) return;
       setState(() {
         _totalRevenue = total;
-        _revenueData = _aggregateChartData(chartData, _revenueFilter);
+        _revenueData = chartData;
         _isLoadingRevenue = false;
       });
     } catch (e) {
@@ -144,9 +203,6 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
         _isLoadingRevenue = false;
       });
       DPrint.error("Error fetching revenue data: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching revenue data: $e')),
-      );
     }
   }
 
@@ -178,115 +234,203 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
     }
   }
 
-  // Aggregate chart data for display
-  List<ChartData> _aggregateChartData(List<ChartData> data, String filter) {
-    final Map<String, double> aggregated = {};
-    for (var item in data) {
-      aggregated.update(
-        item.label,
-        (value) => value + item.value,
-        ifAbsent: () => item.value,
-      );
-    }
-
-    final result = aggregated.entries
-        .map((entry) => ChartData(label: entry.key, value: entry.value))
-        .toList();
-
-    // Sort by label (assuming numeric for simplicity)
-    result.sort((a, b) => int.parse(a.label).compareTo(int.parse(b.label)));
-    return result.take(12).toList(); // Limit to reasonable number of points
-  }
+  // Removed _aggregateChartData as aggregation is now handled within fetch methods
 
   // Fetch live product data from Firestore
   void _fetchLiveProductData() {
     final products = ref.read(productsProvider).products;
-    final List<ChartData> chartData = [];
-
     final timeRange = _getTimeRange(_liveProductFilter);
-    final startDate = DateTime.fromMillisecondsSinceEpoch(
-      timeRange['interval_start']! * 1000,
-    );
+    final startDate = timeRange['start_date'] as DateTime;
 
     final Map<String, int> productCounts = {};
+    final List<String> labels = [];
+
+    // Initialize labels based on filter
+    if (_liveProductFilter == 'Day') {
+      for (int i = 0; i <= 23; i++) {
+        String label = i.toString().padLeft(2, '0');
+        labels.add(label);
+        productCounts[label] = 0;
+      }
+    } else if (_liveProductFilter == 'Week') {
+      const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      labels.addAll(weekDays);
+      for (var day in weekDays) productCounts[day] = 0;
+    } else if (_liveProductFilter == 'Month') {
+      final daysInMonth = DateTime(startDate.year, startDate.month + 1, 0).day;
+      for (int i = 1; i <= daysInMonth; i++) {
+        String label = i.toString();
+        labels.add(label);
+        productCounts[label] = 0;
+      }
+    } else {
+      // Year
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      labels.addAll(months);
+      for (var month in months) productCounts[month] = 0;
+    }
+
     for (var product in products.where((p) => p.isActive)) {
       if (product.createdAt.isAfter(startDate)) {
         String label;
         switch (_liveProductFilter) {
           case 'Day':
-            label = product.createdAt.hour.toString();
+            label = product.createdAt.hour.toString().padLeft(2, '0');
             break;
           case 'Week':
-            label = product.createdAt.day.toString();
+            const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            label = weekDays[product.createdAt.weekday - 1];
             break;
           case 'Month':
             label = product.createdAt.day.toString();
             break;
           case 'Year':
           default:
-            label = product.createdAt.month.toString();
+            const months = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+            label = months[product.createdAt.month - 1];
             break;
         }
-        productCounts.update(label, (value) => value + 1, ifAbsent: () => 1);
+        if (productCounts.containsKey(label)) {
+          productCounts[label] = productCounts[label]! + 1;
+        }
       }
     }
 
-    chartData.addAll(
-      productCounts.entries.map(
-        (entry) => ChartData(label: entry.key, value: entry.value.toDouble()),
-      ),
-    );
+    final List<ChartData> chartData = labels
+        .map(
+          (label) =>
+              ChartData(label: label, value: productCounts[label]!.toDouble()),
+        )
+        .toList();
 
-    chartData.sort((a, b) => int.parse(a.label).compareTo(int.parse(b.label)));
     if (!mounted) return;
     setState(() {
-      _liveProductData = chartData.take(12).toList();
+      _liveProductData = chartData;
     });
   }
 
   // Fetch new user data from Firestore
   void _fetchNewUserData() {
     final users = ref.read(userProvider).users;
-    final List<ChartData> chartData = [];
-
     final timeRange = _getTimeRange(_newUserFilter);
-    final startDate = DateTime.fromMillisecondsSinceEpoch(
-      timeRange['interval_start']! * 1000,
-    );
+    final startDate = timeRange['start_date'] as DateTime;
 
     final Map<String, int> userCounts = {};
+    final List<String> labels = [];
+
+    // Initialize labels based on filter
+    if (_newUserFilter == 'Day') {
+      for (int i = 0; i <= 23; i++) {
+        String label = i.toString().padLeft(2, '0');
+        labels.add(label);
+        userCounts[label] = 0;
+      }
+    } else if (_newUserFilter == 'Week') {
+      const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      labels.addAll(weekDays);
+      for (var day in weekDays) userCounts[day] = 0;
+    } else if (_newUserFilter == 'Month') {
+      final daysInMonth = DateTime(startDate.year, startDate.month + 1, 0).day;
+      for (int i = 1; i <= daysInMonth; i++) {
+        String label = i.toString();
+        labels.add(label);
+        userCounts[label] = 0;
+      }
+    } else {
+      // Year
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      labels.addAll(months);
+      for (var month in months) userCounts[month] = 0;
+    }
+
     for (var user in users.where((u) => u.role != 'admin')) {
       if (user.createdAt.isAfter(startDate)) {
         String label;
         switch (_newUserFilter) {
           case 'Day':
-            label = user.createdAt.hour.toString();
+            label = user.createdAt.hour.toString().padLeft(2, '0');
             break;
           case 'Week':
-            label = user.createdAt.day.toString();
+            const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            label = weekDays[user.createdAt.weekday - 1];
             break;
           case 'Month':
             label = user.createdAt.day.toString();
             break;
           case 'Year':
           default:
-            label = user.createdAt.month.toString();
+            const months = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+            label = months[user.createdAt.month - 1];
             break;
         }
-        userCounts.update(label, (value) => value + 1, ifAbsent: () => 1);
+        if (userCounts.containsKey(label)) {
+          userCounts[label] = userCounts[label]! + 1;
+        }
       }
     }
 
-    chartData.addAll(
-      userCounts.entries.map(
-        (entry) => ChartData(label: entry.key, value: entry.value.toDouble()),
-      ),
-    );
+    final List<ChartData> chartData = labels
+        .map(
+          (label) =>
+              ChartData(label: label, value: userCounts[label]!.toDouble()),
+        )
+        .toList();
 
-    chartData.sort((a, b) => int.parse(a.label).compareTo(int.parse(b.label)));
     if (!mounted) return;
     setState(() {
-      _newUserData = chartData.take(12).toList();
+      _newUserData = chartData;
     });
   }
 
@@ -295,15 +439,23 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
     final productsState = ref.watch(productsProvider);
     final userState = ref.watch(userProvider);
 
-    double totalRevenue = _isLoadingRevenue ? 0.0 : _totalRevenue;
-    int totalLiveProducts = 0;
-    int totalUsers = userState.users.where((u) => u.role != 'admin').length;
+    // Listen for changes in products and users to update counts reactively
+    ref.listen(productsProvider, (previous, next) {
+      if (previous?.products.length != next.products.length) {
+        _fetchLiveProductData();
+      }
+    });
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.users.length != next.users.length) {
+        _fetchNewUserData();
+      }
+    });
 
-    if (productsState.products.isNotEmpty) {
-      totalLiveProducts = productsState.products
-          .where((p) => p.isActive)
-          .length;
-    }
+    double totalRevenue = _isLoadingRevenue ? 0.0 : _totalRevenue;
+    int totalLiveProducts = productsState.products
+        .where((p) => p.isActive)
+        .length;
+    int totalUsers = userState.users.where((u) => u.role != 'admin').length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -319,8 +471,10 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
                   title: 'Total Revenue',
                   value: _isLoadingRevenue
                       ? 'Loading...'
-                      : '\$${totalRevenue.toStringAsFixed(2)}', // Display with 2 decimal places
+                      : '\$${totalRevenue.toStringAsFixed(2)}',
                   iconColor: AppColors.primaryLaurel,
+                  trend: '+12.5%', // Mock trend for now
+                  isPositive: true,
                 ),
               ),
               const SizedBox(width: 24),
@@ -330,6 +484,8 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
                   title: 'Total Live Product',
                   value: '$totalLiveProducts',
                   iconColor: AppColors.primaryLaurel,
+                  trend: '+5.2%', // Mock trend
+                  isPositive: true,
                 ),
               ),
               const SizedBox(width: 24),
@@ -339,6 +495,8 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
                   title: 'Total User',
                   value: userState.isLoading ? 'Loading...' : '$totalUsers',
                   iconColor: AppColors.primaryLaurel,
+                  trend: '+1.8%', // Mock trend
+                  isPositive: true,
                 ),
               ),
             ],
@@ -352,10 +510,9 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
             children: [
               Expanded(
                 child: ChartCard(
-                  title: 'New User',
-                  data: _newUserData.isEmpty
-                      ? DummyData.newUserData
-                      : _newUserData,
+                  title:
+                      'New User (${_newUserData.fold(0.0, (sum, item) => sum + item.value).toInt()})',
+                  data: _newUserData,
                   chartType: ChartType.line,
                   selectedFilter: _newUserFilter,
                   onFilterChanged: (filter) {
@@ -369,10 +526,9 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
               const SizedBox(width: 24),
               Expanded(
                 child: ChartCard(
-                  title: 'Live Product report',
-                  data: _liveProductData.isEmpty
-                      ? DummyData.liveProductData
-                      : _liveProductData,
+                  title:
+                      'Live Product report (${_liveProductData.fold(0.0, (sum, item) => sum + item.value).toInt()})',
+                  data: _liveProductData,
                   chartType: ChartType.bar,
                   selectedFilter: _liveProductFilter,
                   onFilterChanged: (filter) {
@@ -390,8 +546,9 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
 
           // Revenue Chart
           ChartCard(
-            title: 'Revenue report',
-            data: _isLoadingRevenue ? DummyData.revenueThisYear : _revenueData,
+            title:
+                'Revenue report (\$${_revenueData.fold(0.0, (sum, item) => sum + item.value).toStringAsFixed(2)})',
+            data: _revenueData,
             chartType: ChartType.area,
             timeFilters: const ['Day', 'Week', 'Month', 'Year'],
             selectedFilter: _revenueFilter,

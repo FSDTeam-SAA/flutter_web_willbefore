@@ -5,6 +5,8 @@ class StatCard extends StatelessWidget {
   final String title;
   final String value;
   final Color iconColor;
+  final String? trend;
+  final bool? isPositive;
 
   const StatCard({
     super.key,
@@ -12,6 +14,8 @@ class StatCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.iconColor,
+    this.trend,
+    this.isPositive,
   });
 
   @override
@@ -38,11 +42,7 @@ class StatCard extends StatelessWidget {
               color: iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -52,19 +52,47 @@ class StatCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    // color: AppTheme.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: Colors.grey,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    // color: AppTheme.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (trend != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        trend!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: (isPositive ?? true)
+                              ? Colors.green
+                              : Colors.red,
+                        ),
+                      ),
+                      Icon(
+                        (isPositive ?? true)
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        size: 14,
+                        color: (isPositive ?? true) ? Colors.green : Colors.red,
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

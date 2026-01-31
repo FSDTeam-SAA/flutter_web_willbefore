@@ -42,12 +42,15 @@ class ChartCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondaryColor,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondaryColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (timeFilters.isNotEmpty)
@@ -111,10 +114,11 @@ class ChartCard extends StatelessWidget {
     if (data.isEmpty) return const SizedBox();
 
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final effectiveMax = maxValue == 0 ? 1.0 : maxValue;
 
     return CustomPaint(
       size: const Size(double.infinity, 200),
-      painter: LineChartPainter(data: data, maxValue: maxValue),
+      painter: LineChartPainter(data: data, maxValue: effectiveMax),
     );
   }
 
@@ -122,34 +126,41 @@ class ChartCard extends StatelessWidget {
     if (data.isEmpty) return const SizedBox();
 
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final effectiveMax = maxValue == 0 ? 1.0 : maxValue;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: data.map((item) {
-        final height = (item.value / maxValue) * 160;
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: 24,
-              height: height,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLaurel,
-                borderRadius: BorderRadius.circular(4),
-              ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: data.map((item) {
+          final height = (item.value / effectiveMax) * 160;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  width: 24,
+                  height: height,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLaurel,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  item.label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              item.label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondaryColor,
-              ),
-            ),
-          ],
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -157,10 +168,11 @@ class ChartCard extends StatelessWidget {
     if (data.isEmpty) return const SizedBox();
 
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final effectiveMax = maxValue == 0 ? 1.0 : maxValue;
 
     return CustomPaint(
       size: const Size(double.infinity, 200),
-      painter: AreaChartPainter(data: data, maxValue: maxValue),
+      painter: AreaChartPainter(data: data, maxValue: effectiveMax),
     );
   }
 }
@@ -183,7 +195,7 @@ class LineChartPainter extends CustomPainter {
     final path = Path();
 
     for (int i = 0; i < data.length; i++) {
-      final x = (i / (data.length - 1)) * size.width;
+      final x = data.length > 1 ? (i / (data.length - 1)) * size.width : 0.0;
       final y = size.height - (data[i].value / maxValue) * size.height;
 
       if (i == 0) {
@@ -227,7 +239,7 @@ class AreaChartPainter extends CustomPainter {
     path.moveTo(0, size.height);
 
     for (int i = 0; i < data.length; i++) {
-      final x = (i / (data.length - 1)) * size.width;
+      final x = data.length > 1 ? (i / (data.length - 1)) * size.width : 0.0;
       final y = size.height - (data[i].value / maxValue) * size.height;
 
       path.lineTo(x, y);
