@@ -10,6 +10,7 @@ import 'package:url_strategy/url_strategy.dart';
 
 import 'core/routes/route_endpoint.dart';
 import 'firebase_options.dart';
+import 'services/notification_service.dart';
 
 final FirebaseFunctions functions = FirebaseFunctions.instance;
 
@@ -24,6 +25,8 @@ void main() async {
   // Stripe.publishableKey = stripePublishableKey;
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+
+  await NotificationService().initialize();
 
   // functions.useFunctionsEmulator('localhost', 5001);
 

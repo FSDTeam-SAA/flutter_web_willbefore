@@ -9,41 +9,29 @@ Future<void> sendShipmentNotification({
   required String? trackingUrl,
   required String? labelUrl,
 }) async {
-  // 1. Get user's FCM token from Firestore
-  final userDoc = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(userId)
-      .get();
+  // 1. Send Push Notification via Cloud Function (Multicast)
+  final callable = FirebaseFunctions.instance.httpsCallable(
+    "startShipment",
+    options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+  );
 
-  if (!userDoc.exists) {
-    DPrint.warn("User document not found: $userId");
-    return;
-  }
+  final String title = 'Order Shipped';
+  final String msg =
+      'Your order #$orderId has been shipped! Tracking: ${trackingNumber ?? "N/A"}';
 
-  final fcmToken = userDoc.data()?['fcmToken'] as String?;
-
-  if (fcmToken == null || fcmToken.isEmpty) {
-    DPrint.warn("No FCM token found for user: $userId");
-    // We still want to persist the notification even if push fails
-  } else {
-    // 2. Send Push Notification via Cloud Function
-    final callable = FirebaseFunctions.instance.httpsCallable(
-      "startShipment",
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-
-    try {
-      await callable.call({
-        "fcmToken": fcmToken,
-        "orderId": orderId,
-        "trackingNumber": trackingNumber,
-        "trackingUrl": trackingUrl,
-        "labelUrl": labelUrl,
-      });
-      DPrint.log("Push notification sent successfully");
-    } catch (e) {
-      DPrint.error("Failed to send shipment notification: $e");
-    }
+  try {
+    await callable.call({
+      "userId": userId, // New: Function handles fetching all tokens
+      "orderId": orderId,
+      "trackingNumber": trackingNumber,
+      "trackingUrl": trackingUrl,
+      "labelUrl": labelUrl,
+      "title": title,
+      "msg": msg,
+    });
+    DPrint.log("Push notification request sent to Cloud Function");
+  } catch (e) {
+    DPrint.error("Failed to send shipment notification: $e");
   }
 
   // 3. Add to Notification Collection

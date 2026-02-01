@@ -1,17 +1,57 @@
 const {onCall} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
-exports.startShipment = onCall(async (params, context) => {
-  const {fcmToken, orderId, msg, title} = params.data;
-  // await startShipment({fcmToken, orderId, msg, title});
+exports.startShipment = onCall(async (request) => {
+  const {userId, fcmToken, orderId, msg, title} = request.data;
+  const db = admin.firestore();
+
+  // 1. Collect tokens
+  let tokens = [];
+
+  // Legacy support: single token passed directly
+  if (fcmToken) {
+    tokens.push(fcmToken);
+  }
+
+  // New support: fetch all tokens from subcollection
+  if (userId) {
+    try {
+      const tokensSnap = await db
+          .collection("users")
+          .doc(userId)
+          .collection("fcmTokens")
+          .get();
+
+      tokensSnap.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.token) tokens.push(data.token);
+      });
+    } catch (e) {
+      console.error("Error fetching tokens for user:", userId, e);
+    }
+  }
+
+  // Deduplicate tokens
+  tokens = [...new Set(tokens)];
+
+  if (tokens.length === 0) {
+    console.log("No tokens found for user/request");
+    return {success: false, message: "No tokens found"};
+  }
+
+  // 2. Prepare message
+  const notificationTitle = title || "Orders Shipped";
+  const notificationBody = msg || `Your order #${orderId} has been shipped.`;
+
+  // Construct message payload
   const message = {
-    token: fcmToken,
+    tokens: tokens,
     notification: {
-      title: title,
-      body: msg,
+      title: notificationTitle,
+      body: notificationBody,
     },
     data: {
-      orderId: orderId,
+      orderId: orderId || "",
       type: "shipment_started",
       click_action: "FLUTTER_NOTIFICATION_CLICK",
     },
@@ -31,14 +71,36 @@ exports.startShipment = onCall(async (params, context) => {
       },
     },
   };
-  try {
-    const response = await admin.messaging().send(message);
-    console.log("Successfully sent message:", response);
-  } catch (error) {
-    console.log("Error sending message:", error);
 
-    if (error.code === "messaging/registration-token-not-registered") {
-      console.log("Token is invalid or expired");
+  // 3. Send
+  try {
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log(
+        "Notifications sent:",
+        response.successCount,
+        "successful,",
+        response.failureCount,
+        "failed",
+    );
+
+    // Clean up invalid tokens
+    if (response.failureCount > 0) {
+      const failedTokens = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          failedTokens.push(tokens[idx]);
+        }
+      });
+      console.log("Failed tokens to potentially remove:", failedTokens);
     }
+
+    return {
+      success: true,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    };
+  } catch (error) {
+    console.error("Error sending multicast message:", error);
+    return {success: false, error: error.message};
   }
 });
