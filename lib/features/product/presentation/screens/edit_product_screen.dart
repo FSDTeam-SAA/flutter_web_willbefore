@@ -16,6 +16,8 @@ import '../../domain/requests/update_product_request.dart';
 import '../providers/add_product_form.dart';
 import '../providers/edit_product_form_provider.dart';
 import '../providers/products_providers.dart';
+import '../providers/send_product_notification.dart';
+import '../../domain/entrity/product.dart';
 
 class EditProductScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -1978,57 +1980,92 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   Widget _buildActionButtons() {
     final productsState = ref.watch(productsProvider);
 
-    return Row(
+    Product? product;
+    try {
+      product = productsState.products.firstWhere(
+        (p) => p.id == widget.productId,
+      );
+    } catch (_) {}
+
+    return Column(
       children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: productsState.isUpdating
-                ? null
-                : () {
-                    context.go(RouteEndpoint.products);
-                  },
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              side: const BorderSide(color: AppColors.borderColor),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondaryColor),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: productsState.isUpdating ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryLaurel,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: productsState.isUpdating
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    'Update',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: productsState.isUpdating
+                    ? null
+                    : () {
+                        context.go(RouteEndpoint.products);
+                      },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: AppColors.borderColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-          ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textSecondaryColor),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: productsState.isUpdating ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryLaurel,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: productsState.isUpdating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Update',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ),
+        if (product != null) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => sendProductNotification(context, product!),
+              icon: const Icon(Icons.notifications_active, color: Colors.white),
+              label: const Text(
+                'Notify Users About Product',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

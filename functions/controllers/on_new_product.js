@@ -1,97 +1,99 @@
-const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onCall} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
-exports.onNewProduct = onDocumentCreated(
-    "products/{productId}",
-    async (event) => {
-      const snapshot = event.data;
-      if (!snapshot) {
-        console.log("No data associated with the event");
-        return;
+exports.sendProductNotification = onCall(async (request) => {
+  const product = request.data;
+
+  if (!product || !product.name) {
+    console.error("Invalid product data received");
+    return {success: false, error: "Invalid product data"};
+  }
+
+  console.log(
+      "Fetching all FCM tokens for product notification: " +
+      `${product.name}...`,
+  );
+
+  // 1. Collect all FCM tokens from every user's fcmTokens subcollection
+  const db = admin.firestore();
+  const usersSnapshot = await db.collection("users").get();
+
+  const tokens = [];
+  const tokenDocRefs = []; // track refs for stale token cleanup
+
+  for (const userDoc of usersSnapshot.docs) {
+    const tokensSnapshot = await userDoc.ref.collection("fcmTokens").get();
+    for (const tokenDoc of tokensSnapshot.docs) {
+      const data = tokenDoc.data();
+      if (data.token) {
+        tokens.push(data.token);
+        tokenDocRefs.push(tokenDoc.ref);
       }
+    }
+  }
 
-      const productData = snapshot.data();
-      const productName = productData.title || "New Product";
-      const productPrice = productData.actualPrice || "";
-      const db = admin.firestore();
+  if (tokens.length === 0) {
+    console.log("No FCM tokens found. No notifications sent.");
+    return {success: true, message: "No tokens registered"};
+  }
 
-      console.log(
-          `New product created: ${productName}. Fetching all user tokens...`,
-      );
+  console.log(`Found ${tokens.length} token(s). Sending notifications...`);
 
-      // 1. Get all users
-      const usersSnap = await db.collection("users").get();
-      const tokens = [];
-
-      // 2. Collect tokens from each user's fcmTokens subcollection
-      // Note: This could be optimized for many users
-      const tokenFetchPromises = usersSnap.docs.map(async (userDoc) => {
-        const tokensSubSnap = await userDoc.ref.collection("fcmTokens").get();
-        tokensSubSnap.docs.forEach((tokenDoc) => {
-          const data = tokenDoc.data();
-          if (data.token) {
-            tokens.push(data.token);
-          }
-        });
-      });
-
-      await Promise.all(tokenFetchPromises);
-
-      // Deduplicate tokens
-      const uniqueTokens = [...new Set(tokens)];
-
-      if (uniqueTokens.length === 0) {
-        console.log("No tokens found to notify.");
-        return;
-      }
-
-      // 3. Prepare message
-      const message = {
-        tokens: uniqueTokens,
-        notification: {
-          title: "New Product Alert! 🚀",
-          body: `Check out our new arrival: ${productName}${
-          productPrice ? ` for only $${productPrice}` : ""
-          }!`,
-        },
-        data: {
-          productId: event.params.productId,
-          type: "new_product",
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
-        },
-        android: {
-          priority: "high",
-          notification: {
-            sound: "default",
-            clickAction: "FLUTTER_NOTIFICATION_CLICK",
-          },
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: "default",
-              badge: 1,
-            },
-          },
-        },
-      };
-
-      // 4. Send
-      try {
-        const response = await admin.messaging().sendEachForMulticast(message);
-        console.log(
-            "Product notifications sent:",
-            response.successCount,
-            "successful,",
-            response.failureCount,
-            "failed",
-        );
-
-        // Optional: Clean up failed tokens if needed
-        return response;
-      } catch (error) {
-        console.error("Error sending multicast notification:", error);
-        return null;
-      }
+  // 2. Build and send the multicast message
+  const message = {
+    tokens,
+    notification: {
+      title: `New Product: ${product.name}!`,
+      body: product.shortDescription || "",
+      imageUrl: product.imageUrl || "",
     },
-);
+    data: {
+      productId: product.id || "",
+      type: "new_product",
+    },
+    android: {
+      notification: {
+        sound: "default",
+      },
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+        },
+      },
+    },
+  };
+
+  const batchResponse = await admin.messaging().sendEachForMulticast(message);
+
+  console.log(
+      `${batchResponse.successCount} sent, ` +
+      `${batchResponse.failureCount} failed.`,
+  );
+
+  // 3. Clean up stale/invalid tokens automatically
+  const staleDeletePromises = [];
+  batchResponse.responses.forEach((resp, idx) => {
+    if (
+      !resp.success &&
+      resp.error &&
+      (resp.error.code === "messaging/registration-token-not-registered" ||
+        resp.error.code === "messaging/invalid-registration-token")
+    ) {
+      console.log(`Removing stale token at index ${idx}`);
+      staleDeletePromises.push(tokenDocRefs[idx].delete());
+    }
+  });
+
+  if (staleDeletePromises.length > 0) {
+    await Promise.all(staleDeletePromises);
+    console.log(`Cleaned up ${staleDeletePromises.length} stale token(s).`);
+  }
+
+  return {
+    success: true,
+    successCount: batchResponse.successCount,
+    failureCount: batchResponse.failureCount,
+  };
+});

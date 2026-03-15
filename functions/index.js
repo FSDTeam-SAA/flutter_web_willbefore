@@ -3,10 +3,14 @@ const admin = require("firebase-admin");
 
 // const { startShipment } = require("./api");
 setGlobalOptions({maxInstances: 10});
-admin.initializeApp();
+admin.initializeApp({
+  credential: admin.credential.cert("./serviceAccountKey.json"),
+});
+
 exports.startShipment = require("./controllers/start_shipment").startShipment;
 exports.inviteUser = require("./controllers/invite_user").inviteUser;
 exports.refundOrder = require("./controllers/refund_order").refundOrder;
 exports.sendRefundNotification =
   require("./controllers/send_refund_notification").sendRefundNotification;
-exports.onNewProduct = require("./controllers/on_new_product").onNewProduct;
+exports.sendProductNotification =
+  require("./controllers/on_new_product").sendProductNotification;

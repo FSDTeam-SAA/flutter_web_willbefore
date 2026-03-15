@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
 import '../providers/products_providers.dart';
+import '../providers/send_product_notification.dart';
 
 class ProductListScreen extends ConsumerStatefulWidget {
   const ProductListScreen({super.key});
@@ -148,7 +149,7 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                           ),
                         ),
                         SizedBox(
-                          width: 100,
+                          width: 140,
                           child: Text(
                             'Action',
                             style: TextStyle(
@@ -337,9 +338,22 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
 
                                 // Actions
                                 SizedBox(
-                                  width: 100,
+                                  width: 140,
                                   child: Row(
                                     children: [
+                                      IconButton(
+                                        onPressed: () =>
+                                            sendProductNotification(
+                                              context,
+                                              product,
+                                            ),
+                                        icon: const Icon(
+                                          Icons.notifications_active_outlined,
+                                          size: 18,
+                                          color: Colors.blueAccent,
+                                        ),
+                                        tooltip: 'Notify all users',
+                                      ),
                                       IconButton(
                                         onPressed: () => context.go(
                                           '${RouteEndpoint.products}/edit/${product.id}',
@@ -471,11 +485,14 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             ElevatedButton(
               onPressed: () async {
                 Navigator.of(context).pop();
+                // Capture messenger before async gap to avoid
+                // "Looking up a deactivated widget's ancestor is unsafe"
+                final messenger = ScaffoldMessenger.of(context);
                 final success = await ref
                     .read(productsProvider.notifier)
                     .deleteProduct(productId);
-                if (success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (success) {
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Product deleted successfully!'),
                       backgroundColor: Colors.red,
