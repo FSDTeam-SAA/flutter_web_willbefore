@@ -18,6 +18,7 @@ class ProductFormData {
   final String customSize;
   final String customColorName;
   final String description;
+  final bool isActive;
 
   const ProductFormData({
     this.title = '',
@@ -34,6 +35,7 @@ class ProductFormData {
     this.customSize = '',
     this.customColorName = '',
     this.description = '',
+    this.isActive = true,
   });
 
   ProductFormData copyWith({
@@ -51,6 +53,7 @@ class ProductFormData {
     String? customSize,
     String? customColorName,
     String? description,
+    bool? isActive,
   }) {
     return ProductFormData(
       title: title ?? this.title,
@@ -67,6 +70,7 @@ class ProductFormData {
       customSize: customSize ?? this.customSize,
       customColorName: customColorName ?? this.customColorName,
       description: description ?? this.description,
+      isActive: isActive ?? this.isActive,
     );
   }
 }
@@ -178,6 +182,10 @@ class AddProductFormNotifier extends StateNotifier<ProductFormData> {
 
   void updateDescription(String description) {
     state = state.copyWith(description: description);
+  }
+
+  void updateIsActive(bool value) {
+    state = state.copyWith(isActive: value);
   }
 
   void addImages(List<ProductImage> newImages) {

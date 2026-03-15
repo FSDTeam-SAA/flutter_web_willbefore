@@ -14,6 +14,7 @@ class UpdateProductRequest {
   final List<String> colorCodes;
   final List<ProductImageData> newImages;
   final List<String> existingImageUrls;
+  final bool isActive;
   final Map<String, dynamic>? facilities;
 
   const UpdateProductRequest({
@@ -30,6 +31,7 @@ class UpdateProductRequest {
     required this.colorCodes,
     required this.newImages,
     required this.existingImageUrls,
+    required this.isActive,
     this.facilities,
   });
 }

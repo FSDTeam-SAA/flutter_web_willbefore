@@ -14,6 +14,7 @@ class CreateProductRequest {
   final List<ProductImageData> images;
   final double? overOrderDiscount;
   final int? freeReturnDays;
+  final bool isActive;
   final Map<String, dynamic>? facilities;
 
   CreateProductRequest({
@@ -30,6 +31,7 @@ class CreateProductRequest {
     this.images = const [],
     this.overOrderDiscount,
     this.freeReturnDays,
+    this.isActive = true,
     this.facilities,
   });
 }

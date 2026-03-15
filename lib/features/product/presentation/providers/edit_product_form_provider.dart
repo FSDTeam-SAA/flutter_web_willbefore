@@ -22,6 +22,7 @@ class EditProductFormData {
   final String customSize;
   final String customColorName;
   final List<String> existingImageUrls;
+  final bool isActive;
 
   const EditProductFormData({
     required this.id,
@@ -40,6 +41,7 @@ class EditProductFormData {
     this.customSize = '',
     this.customColorName = '',
     this.existingImageUrls = const [],
+    this.isActive = true,
   });
 
   EditProductFormData copyWith({
@@ -59,6 +61,7 @@ class EditProductFormData {
     String? customSize,
     String? customColorName,
     List<String>? existingImageUrls,
+    bool? isActive,
   }) {
     return EditProductFormData(
       id: id ?? this.id,
@@ -77,6 +80,7 @@ class EditProductFormData {
       customSize: customSize ?? this.customSize,
       customColorName: customColorName ?? this.customColorName,
       existingImageUrls: existingImageUrls ?? this.existingImageUrls,
+      isActive: isActive ?? this.isActive,
     );
   }
 }
@@ -146,6 +150,7 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
           product.facilities?['overOrderDiscount']?.toString() ?? '',
       freeReturnDays: product.facilities?['freeReturnDays']?.toString() ?? '',
       existingImageUrls: List.from(product.imageUrls),
+      isActive: product.isActive,
     );
   }
 
@@ -183,6 +188,10 @@ class EditProductFormNotifier extends StateNotifier<EditProductFormData> {
 
   void updateFreeReturnDays(String days) {
     state = state.copyWith(freeReturnDays: days);
+  }
+
+  void updateIsActive(bool value) {
+    state = state.copyWith(isActive: value);
   }
 
   void updateCustomSize(String size) {

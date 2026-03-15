@@ -354,6 +354,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       images: formData.selectedImages
           .map((img) => ProductImageData(bytes: img.bytes, name: img.name))
           .toList(),
+      isActive: formData.isActive,
       facilities: facilities.isNotEmpty ? facilities : null,
     );
 
@@ -473,6 +474,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildVisibilitySection(),
+        const SizedBox(height: 24),
         _buildImageSection(),
         const SizedBox(height: 24),
         _buildSizeSection(),
@@ -481,6 +484,58 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         const SizedBox(height: 32),
         _buildActionButtons(),
       ],
+    );
+  }
+
+  Widget _buildVisibilitySection() {
+    final formData = ref.watch(addProductFormProvider);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Product Visibility',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textAppBlack,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Set the product as active or private (hidden from the app).',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondaryHintColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: Text(
+              formData.isActive ? 'Active / Published' : 'Private / Hidden',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: formData.isActive ? Colors.green : Colors.orange,
+              ),
+            ),
+            value: formData.isActive,
+            activeColor: Colors.green,
+            activeTrackColor: Colors.green.withOpacity(0.5),
+            inactiveThumbColor: Colors.orange,
+            inactiveTrackColor: Colors.orange.withOpacity(0.5),
+            onChanged: (value) {
+              ref.read(addProductFormProvider.notifier).updateIsActive(value);
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
     );
   }
 

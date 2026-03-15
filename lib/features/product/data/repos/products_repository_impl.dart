@@ -93,7 +93,7 @@ class ProductsRepositoryImpl implements ProductsRepository {
         colorCodes: request.colorCodes,
         imageUrls: imageUrls,
         facilities: request.facilities,
-        isActive: true,
+        isActive: request.isActive,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -137,7 +137,7 @@ class ProductsRepositoryImpl implements ProductsRepository {
         colorCodes: request.colorCodes,
         imageUrls: allImageUrls,
         facilities: request.facilities,
-        isActive: true,
+        isActive: request.isActive,
         createdAt: DateTime.now(), // Will be preserved by datasource
         updatedAt: DateTime.now(),
       );

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -458,6 +457,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
             .map((img) => ProductImageData(bytes: img.bytes, name: img.name))
             .toList(),
         existingImageUrls: formData.existingImageUrls,
+        isActive: formData.isActive,
         facilities: facilities.isNotEmpty ? facilities : null,
       );
 
@@ -598,6 +598,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildVisibilitySection(),
+        const SizedBox(height: 24),
         _buildImageSection(),
         const SizedBox(height: 24),
         _buildSizeSection(),
@@ -606,6 +608,60 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         const SizedBox(height: 32),
         _buildActionButtons(),
       ],
+    );
+  }
+
+  Widget _buildVisibilitySection() {
+    final formData = ref.watch(editProductFormProvider(widget.productId));
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Product Visibility',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textAppBlack,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Set the product as active or private (hidden from the app).',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondaryHintColor,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SwitchListTile(
+            title: Text(
+              formData.isActive ? 'Active / Published' : 'Private / Hidden',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: formData.isActive ? Colors.green : Colors.orange,
+              ),
+            ),
+            value: formData.isActive,
+            activeColor: Colors.green,
+            activeTrackColor: Colors.green.withOpacity(0.5),
+            inactiveThumbColor: Colors.orange,
+            inactiveTrackColor: Colors.orange.withOpacity(0.5),
+            onChanged: (value) {
+              ref
+                  .read(editProductFormProvider(widget.productId).notifier)
+                  .updateIsActive(value);
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+        ],
+      ),
     );
   }
 
