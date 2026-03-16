@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
+import '../../domain/requests/update_product_request.dart';
 import '../providers/products_providers.dart';
 import '../providers/send_product_notification.dart';
 
@@ -204,183 +205,260 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
 
                           DPrint.info("Products : ${product.colors}");
 
-                          return Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: isLast
-                                      ? Colors.transparent
-                                      : AppColors.borderColor,
+                          return InkWell(
+                            onTap: () {
+                              context.go(
+                                '${RouteEndpoint.products}/edit/${product.id}',
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: isLast
+                                        ? Colors.transparent
+                                        : AppColors.borderColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                // Product Name with Image
-                                Expanded(
-                                  flex: 3,
-                                  child: Row(
-                                    children: [
-                                      // Product Image
-                                      Container(
-                                        width: 60,
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          color: AppColors.bgColor,
-                                        ),
-                                        child: product.imageUrls.isNotEmpty
-                                            ? ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: Image.network(
-                                                  product.imageUrls.first,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return const Icon(
-                                                          Icons.inventory,
-                                                          color: AppColors
-                                                              .primaryLaurel,
-                                                          size: 24,
-                                                        );
-                                                      },
-                                                ),
-                                              )
-                                            : const Icon(
-                                                Icons.inventory,
-                                                color: AppColors.primaryLaurel,
-                                                size: 24,
-                                              ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      // Product Name
-                                      Expanded(
-                                        child: Text(
-                                          product.title,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.textAppBlack,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // ID
-                                Expanded(
-                                  child: Text(
-                                    product.id.substring(0, 8),
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondaryColor,
-                                    ),
-                                  ),
-                                ),
-
-                                // Actual Price
-                                Expanded(
-                                  child: Text(
-                                    '\$${product.actualPrice.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textAppBlack,
-                                    ),
-                                  ),
-                                ),
-
-                                // Discount Price
-                                Expanded(
-                                  child: Text(
-                                    product.discountPrice != null
-                                        ? '\$${product.discountPrice!.toStringAsFixed(2)}'
-                                        : '-',
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondaryColor,
-                                    ),
-                                  ),
-                                ),
-
-                                // Stock
-                                Expanded(
-                                  child: Text(
-                                    '${product.stock}',
-                                    style: TextStyle(
-                                      color: product.stock > 20
-                                          ? Colors.green
-                                          : product.stock > 5
-                                          ? Colors.orange
-                                          : Colors.red,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-
-                                // Date
-                                Expanded(
-                                  child: Text(
-                                    DateFormat(
-                                      'dd MMM yyyy hh:mm a',
-                                    ).format(product.createdAt),
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondaryColor,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-
-                                // Actions
-                                SizedBox(
-                                  width: 140,
-                                  child: Row(
-                                    children: [
-                                      IconButton(
-                                        onPressed: () =>
-                                            sendProductNotification(
-                                              context,
-                                              product,
+                              child: Row(
+                                children: [
+                                  // Product Name with Image
+                                  Expanded(
+                                    flex: 3,
+                                    child: Row(
+                                      children: [
+                                        // Product Image
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
                                             ),
-                                        icon: const Icon(
-                                          Icons.notifications_active_outlined,
-                                          size: 18,
-                                          color: Colors.blueAccent,
+                                            color: AppColors.bgColor,
+                                          ),
+                                          child: product.imageUrls.isNotEmpty
+                                              ? ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  child: Image.network(
+                                                    product.imageUrls.first,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return const Icon(
+                                                            Icons.inventory,
+                                                            color: AppColors
+                                                                .primaryLaurel,
+                                                            size: 24,
+                                                          );
+                                                        },
+                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.inventory,
+                                                  color:
+                                                      AppColors.primaryLaurel,
+                                                  size: 24,
+                                                ),
                                         ),
-                                        tooltip: 'Notify all users',
-                                      ),
-                                      IconButton(
-                                        onPressed: () => context.go(
-                                          '${RouteEndpoint.products}/edit/${product.id}',
+                                        const SizedBox(width: 12),
+                                        // Product Name
+                                        Expanded(
+                                          child: Text(
+                                            product.title,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.textAppBlack,
+                                            ),
+                                          ),
                                         ),
-                                        icon: const Icon(
-                                          Icons.edit_outlined,
-                                          size: 18,
-                                          color: AppColors.primaryLaurel,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        onPressed: productsState.isDeleting
-                                            ? null
-                                            : () => _showDeleteDialog(
-                                                context,
-                                                product.id,
-                                              ),
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          size: 18,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+
+                                  // ID
+                                  Expanded(
+                                    child: Text(
+                                      product.id.substring(0, 8),
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Actual Price
+                                  Expanded(
+                                    child: Text(
+                                      '\$${product.actualPrice.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.textAppBlack,
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Discount Price
+                                  Expanded(
+                                    child: Text(
+                                      product.discountPrice != null
+                                          ? '\$${product.discountPrice!.toStringAsFixed(2)}'
+                                          : '-',
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondaryColor,
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Stock
+                                  Expanded(
+                                    child: Text(
+                                      '${product.stock}',
+                                      style: TextStyle(
+                                        color: product.stock > 20
+                                            ? Colors.green
+                                            : product.stock > 5
+                                            ? Colors.orange
+                                            : Colors.red,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Date
+                                  Expanded(
+                                    child: Text(
+                                      DateFormat(
+                                        'dd MMM yyyy hh:mm a',
+                                      ).format(product.createdAt),
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondaryColor,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Actions
+                                  SizedBox(
+                                    width: 140,
+                                    child: Row(
+                                      children: [
+                                        IconButton(
+                                          onPressed: productsState.isUpdating
+                                              ? null
+                                              : () async {
+                                                  final request =
+                                                      UpdateProductRequest(
+                                                        id: product.id,
+                                                        title: product.title,
+                                                        description:
+                                                            product.description,
+                                                        actualPrice:
+                                                            product.actualPrice,
+                                                        discountPrice: product
+                                                            .discountPrice,
+                                                        stock: product.stock,
+                                                        categoryId:
+                                                            product.categoryId,
+                                                        promoId:
+                                                            product.promoId,
+                                                        sizes: product.sizes,
+                                                        colors: product.colors,
+                                                        colorCodes:
+                                                            product.colorCodes,
+                                                        newImages: [],
+                                                        existingImageUrls:
+                                                            product.imageUrls,
+                                                        isActive:
+                                                            !product.isActive,
+                                                        facilities:
+                                                            product.facilities,
+                                                      );
+
+                                                  final success = await ref
+                                                      .read(
+                                                        productsProvider
+                                                            .notifier,
+                                                      )
+                                                      .updateProduct(request);
+
+                                                  if (success && mounted) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          product.isActive
+                                                              ? 'Product hidden successfully!'
+                                                              : 'Product published successfully!',
+                                                        ),
+                                                        backgroundColor:
+                                                            AppColors
+                                                                .primaryLaurel,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                          icon: Icon(
+                                            product.isActive
+                                                ? Icons.visibility
+                                                : Icons.visibility_off,
+                                            size: 18,
+                                            color: product.isActive
+                                                ? Colors.green
+                                                : Colors.orange,
+                                          ),
+                                          tooltip: product.isActive
+                                              ? 'Hide Product'
+                                              : 'Publish Product',
+                                        ),
+                                        IconButton(
+                                          onPressed: () =>
+                                              sendProductNotification(
+                                                context,
+                                                product,
+                                              ),
+                                          icon: const Icon(
+                                            Icons.notifications_active_outlined,
+                                            size: 18,
+                                            color: Colors.blueAccent,
+                                          ),
+                                          tooltip: 'Notify all users',
+                                        ),
+                                        // IconButton(
+                                        // onPressed: () => context.go(
+                                        //   '${RouteEndpoint.products}/edit/${product.id}',
+                                        // ),
+                                        //   icon: const Icon(
+                                        //     Icons.edit_outlined,
+                                        //     size: 18,
+                                        //     color: AppColors.primaryLaurel,
+                                        //   ),
+                                        // ),
+                                        IconButton(
+                                          onPressed: productsState.isDeleting
+                                              ? null
+                                              : () => _showDeleteDialog(
+                                                  context,
+                                                  product.id,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },

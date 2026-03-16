@@ -649,7 +649,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ),
             ),
             value: formData.isActive,
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
             activeTrackColor: Colors.green.withOpacity(0.5),
             inactiveThumbColor: Colors.orange,
             inactiveTrackColor: Colors.orange.withOpacity(0.5),
