@@ -21,6 +21,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/promos')) return NavigationItem.promo;
     if (location.startsWith('/profile')) return NavigationItem.userProfile;
     if (location.startsWith('/settings')) return NavigationItem.settings;
+    if (location.startsWith('/notifications')) return NavigationItem.notifications;
     return NavigationItem.dashboard;
   }
 
@@ -35,6 +36,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/promos')) return 'Promos';
     if (location.startsWith('/profile')) return 'User Profile';
     if (location.startsWith('/settings')) return 'Settings';
+    if (location.startsWith('/notifications')) return 'Notifications';
     return 'Dashboard';
   }
 
@@ -49,6 +51,7 @@ class DashboardLayout extends StatelessWidget {
     if (location.startsWith('/promos')) return ['Dashboard', 'Promo List'];
     if (location.startsWith('/profile')) return ['Dashboard', 'User Profile'];
     if (location.startsWith('/settings')) return ['Dashboard', 'Settings'];
+    if (location.startsWith('/notifications')) return ['Dashboard', 'Notifications'];
     return ['Dashboard'];
   }
 
@@ -74,6 +77,9 @@ class DashboardLayout extends StatelessWidget {
         break;
       case NavigationItem.settings:
         context.go('/settings');
+        break;
+      case NavigationItem.notifications:
+        context.go('/notifications');
         break;
     }
   }

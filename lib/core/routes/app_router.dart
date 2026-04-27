@@ -139,6 +139,11 @@ class AppRouter {
             name: 'settings',
             builder: (context, state) => const AdminSettingScreen(),
           ),
+          GoRoute(
+            path: RouteEndpoint.notifications,
+            name: 'notifications',
+            builder: (context, state) => const NotificationScreen(),
+          ),
         ],
       ),
     ],

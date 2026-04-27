@@ -20,8 +20,23 @@ exports.sendProductNotification = onCall(async (request) => {
 
   const tokens = [];
   const tokenDocRefs = []; // track refs for stale token cleanup
+  const notificationPromises = []; // track Firestore notification writes
 
   for (const userDoc of usersSnapshot.docs) {
+    // 1a. Add to user's notifications collection in Firestore
+    notificationPromises.push(
+        userDoc.ref.collection("notifications").add({
+          title: `New Product: ${product.name}!`,
+          message: product.shortDescription || "",
+          productId: product.id || "",
+          imageUrl: product.imageUrl || "",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          read: false,
+          type: "new_product",
+        }),
+    );
+
+    // 1b. Collect FCM tokens
     const tokensSnapshot = await userDoc.ref.collection("fcmTokens").get();
     for (const tokenDoc of tokensSnapshot.docs) {
       const data = tokenDoc.data();
@@ -30,6 +45,12 @@ exports.sendProductNotification = onCall(async (request) => {
         tokenDocRefs.push(tokenDoc.ref);
       }
     }
+  }
+
+  // Await all notification writes (in parallel with FCM processing)
+  if (notificationPromises.length > 0) {
+    await Promise.all(notificationPromises);
+    console.log(`Added notifications to ${notificationPromises.length} users.`);
   }
 
   if (tokens.length === 0) {

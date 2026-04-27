@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_willbefore/core/routes/route_endpoint.dart';
+import 'package:go_router/go_router.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
 
-class DashboardHeader extends StatelessWidget {
+class DashboardHeader extends ConsumerWidget {
   final String title;
   final List<String> breadcrumbs;
 
@@ -11,7 +15,13 @@ class DashboardHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notificationsAsync = ref.watch(notificationProvider);
+    final unreadCount = notificationsAsync.maybeWhen(
+      data: (notifications) => notifications.where((n) => !n.read).length,
+      orElse: () => 0,
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -71,6 +81,43 @@ class DashboardHeader extends StatelessWidget {
           // User Profile
           Row(
             children: [
+              const SizedBox(width: 12),
+              // Notification Bell
+              Stack(
+                children: [
+                  IconButton(
+                    onPressed: () => context.go(RouteEndpoint.notifications),
+                    icon: const Icon(Icons.notifications_outlined),
+                    color: Colors.grey[700],
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 9 ? '9+' : '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
               const Text(
                 'Admin',
                 style: TextStyle(

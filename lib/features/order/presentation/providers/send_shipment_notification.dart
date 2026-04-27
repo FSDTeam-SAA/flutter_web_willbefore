@@ -42,15 +42,17 @@ Future<void> sendShipmentNotification({
         .collection('notifications')
         .add({
           'title': 'Order Shipped',
-          'body':
+          'message':
               'Your order #$orderId has been shipped! Tracking: ${trackingNumber ?? "N/A"}',
           'orderId': orderId,
-          'trackingNumber': trackingNumber,
-          'trackingUrl': trackingUrl,
-          'labelUrl': labelUrl,
+          'tracking_number': trackingNumber, 
+          'metadata': {
+            'tracking_url': trackingUrl,
+            'label_url': labelUrl,
+          },
           'createdAt': FieldValue.serverTimestamp(),
-          'isRead': false,
-          'type': 'shipment',
+          'read': false,
+          'type': 'order_shipped',
         });
     DPrint.log("Notification added to collection successfully");
   } catch (e) {

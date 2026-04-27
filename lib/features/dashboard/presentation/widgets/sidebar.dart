@@ -67,6 +67,11 @@ class Sidebar extends ConsumerWidget {
                   title: 'Setting',
                   item: NavigationItem.settings,
                 ),
+                _buildNavItem(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notifications',
+                  item: NavigationItem.notifications,
+                ),
               ],
             ),
           ),
