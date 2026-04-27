@@ -420,10 +420,11 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
                                         ),
                                         IconButton(
                                           onPressed: () =>
-                                              sendProductNotification(
-                                                context,
-                                                product,
-                                              ),
+                                              // sendProductNotification(
+                                              //   context,
+                                              //   product,
+                                              // ),
+                                              null,
                                           icon: const Icon(
                                             Icons.notifications_active_outlined,
                                             size: 18,

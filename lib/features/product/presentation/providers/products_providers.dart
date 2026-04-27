@@ -74,7 +74,7 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
     }
   }
 
-  Future<bool> createProduct(CreateProductRequest request) async {
+  Future<Product?> createProduct(CreateProductRequest request) async {
     state = state.copyWith(isCreating: true, errorMessage: null);
 
     try {
@@ -83,10 +83,10 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
       final updatedProducts = [newProduct, ...state.products];
       state = state.copyWith(products: updatedProducts, isCreating: false);
 
-      return true;
+      return newProduct;
     } catch (e) {
       state = state.copyWith(isCreating: false, errorMessage: e.toString());
-      return false;
+      return null;
     }
   }
 

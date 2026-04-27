@@ -25,6 +25,7 @@ Future<bool> sendProductNotification(
     );
 
     if (result.data['success'] == true) {
+      /*
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -35,12 +36,14 @@ Future<bool> sendProductNotification(
           ),
         );
       }
+      */
       return true;
     } else {
       throw Exception(result.data['error'] ?? "Unknown error");
     }
   } catch (e) {
     DPrint.error("Failed to send product notification: $e");
+    /*
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -49,6 +52,7 @@ Future<bool> sendProductNotification(
         ),
       );
     }
+    */
     return false;
   }
 }
