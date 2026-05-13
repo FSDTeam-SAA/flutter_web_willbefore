@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/notification_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -70,4 +72,15 @@ class NotificationServiceWrapper {
     }
     await batch.commit();
   }
+
+  Future<void> sendTestNotification() async {
+    try {
+      await FirebaseFunctions.instance
+          .httpsCallable('sendSubscriptionNotification')
+          .call();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
+

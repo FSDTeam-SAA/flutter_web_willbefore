@@ -30,14 +30,43 @@ class NotificationScreen extends ConsumerWidget {
                     color: Color(0xFF1A1C1E),
                   ),
                 ),
-                TextButton.icon(
-                  onPressed: () => ref.read(notificationService).clearAll(),
-                  icon: const Icon(Icons.clear_all, size: 20),
-                  label: const Text('Clear All'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                  ),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () async {
+                        try {
+                          await ref.read(notificationService).sendTestNotification();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Test notification sent!')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.send, size: 20),
+                      label: const Text('Send Test'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primaryLaurel,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () => ref.read(notificationService).clearAll(),
+                      icon: const Icon(Icons.clear_all, size: 20),
+                      label: const Text('Clear All'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.redAccent,
+                      ),
+                    ),
+                  ],
                 ),
+
               ],
             ),
             const SizedBox(height: 24),
