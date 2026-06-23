@@ -5,6 +5,8 @@ class WarehouseAddress {
   final String? state;
   final String? zip;
   final String? country;
+  final String? email;
+  final String? phone;
   final bool isResidential;
 
   WarehouseAddress({
@@ -14,6 +16,8 @@ class WarehouseAddress {
     this.state,
     this.zip,
     this.country,
+    this.email,
+    this.phone,
     this.isResidential = false,
   });
 
@@ -24,6 +28,8 @@ class WarehouseAddress {
         'state': state,
         'zip': zip,
         'country': country,
+        'email': email,
+        'phone': phone,
         'isResidential': isResidential,
       };
 
@@ -34,6 +40,8 @@ class WarehouseAddress {
         state: json['state'] as String?,
         zip: json['zip'] as String?,
         country: json['country'] as String?,
+        email: json['email'] as String?,
+        phone: json['phone'] as String?,
         isResidential: json['isResidential'] as bool? ?? false,
       );
 }

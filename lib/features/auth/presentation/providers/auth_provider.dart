@@ -62,6 +62,12 @@ class AuthProvider extends StateNotifier<AuthState> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
+        final role = await _authRepository.getUserRole(currentUser.uid);
+        if (role != 'admin') {
+          await _authRepository.logout();
+          state = state.copyWith(isAuthenticated: false, isInitialized: true);
+          return;
+        }
         final userModel = UserModel.fromFirebase(currentUser);
         state = state.copyWith(
           user: userModel,
@@ -83,7 +89,17 @@ class AuthProvider extends StateNotifier<AuthState> {
   Future<bool> login(LoginRequest request) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _loginUseCase.call(request);
+      final userModel = await _loginUseCase.call(request);
+
+      final role = await _authRepository.getUserRole(userModel.uid);
+      if (role != 'admin') {
+        await _authRepository.logout();
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Access denied. Only admins can log in.',
+        );
+        return false;
+      }
 
       return true;
     } catch (e) {

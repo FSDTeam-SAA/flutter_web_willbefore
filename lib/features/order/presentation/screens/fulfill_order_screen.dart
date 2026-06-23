@@ -132,6 +132,18 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
       final warehouse = ref.read(warehouseProvider).address!;
       final bool isWarehouseUS = warehouse.country?.toUpperCase() == 'US';
 
+      // Validate warehouse has email and phone — required by carriers at label purchase
+      if (warehouse.email == null || warehouse.email!.trim().isEmpty) {
+        throw Exception(
+          'Warehouse email is missing. Please add it in Admin → Settings → Warehouse Address.',
+        );
+      }
+      if (warehouse.phone == null || warehouse.phone!.trim().isEmpty) {
+        throw Exception(
+          'Warehouse phone is missing. Please add it in Admin → Settings → Warehouse Address.',
+        );
+      }
+
       // ---- 2. FROM address -------------------------------------------------------
       final fromAddr = await _shippo.createAddress(
         name: warehouse.name ?? 'Warehouse',
@@ -140,6 +152,8 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
         state: warehouse.state ?? '',
         zip: warehouse.zip ?? '',
         country: warehouse.country ?? '',
+        email: warehouse.email,
+        phone: warehouse.phone,
         isResidential: warehouse.isResidential,
       );
 
@@ -667,7 +681,11 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
               SizedBox(
                 width: 75,
                 child: DropdownButtonFormField<String>(
-                  value: _distanceUnit,
+                  key: const ValueKey('distance_unit'),
+                  value: ['in', 'cm', 'ft', 'mm'].contains(_distanceUnit)
+                      ? _distanceUnit
+                      : 'in',
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Unit',
                     border: OutlineInputBorder(),
@@ -698,7 +716,11 @@ class _FulfillOrderScreenState extends ConsumerState<FullfillOrderScreen> {
               Expanded(
                 flex: 1,
                 child: DropdownButtonFormField<String>(
-                  value: _massUnit,
+                  key: const ValueKey('mass_unit'),
+                  value: ['oz', 'lb', 'kg', 'g'].contains(_massUnit)
+                      ? _massUnit
+                      : 'oz',
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Unit',
                     border: OutlineInputBorder(),

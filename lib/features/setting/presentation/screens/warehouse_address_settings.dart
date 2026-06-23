@@ -23,6 +23,8 @@ class _WarehouseAddressSettingsState
   late final TextEditingController _stateCtrl;
   late final TextEditingController _zipCtrl;
   late final TextEditingController _countryCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
   bool _isResidential = false;
 
   @override
@@ -34,6 +36,8 @@ class _WarehouseAddressSettingsState
     _stateCtrl = TextEditingController();
     _zipCtrl = TextEditingController();
     _countryCtrl = TextEditingController();
+    _emailCtrl = TextEditingController();
+    _phoneCtrl = TextEditingController();
 
     // Load from provider
     final address = ref.read(warehouseProvider).address;
@@ -47,6 +51,8 @@ class _WarehouseAddressSettingsState
     _stateCtrl.text = address.state ?? '';
     _zipCtrl.text = address.zip ?? '';
     _countryCtrl.text = address.country ?? '';
+    _emailCtrl.text = address.email ?? '';
+    _phoneCtrl.text = address.phone ?? '';
     _isResidential = address.isResidential;
   }
 
@@ -58,6 +64,8 @@ class _WarehouseAddressSettingsState
     _stateCtrl.dispose();
     _zipCtrl.dispose();
     _countryCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -71,6 +79,8 @@ class _WarehouseAddressSettingsState
       state: _stateCtrl.text.trim(),
       zip: _zipCtrl.text.trim(),
       country: _countryCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
       isResidential: _isResidential,
     );
 
@@ -156,6 +166,28 @@ class _WarehouseAddressSettingsState
                 controller: _countryCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Country *',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+              ),
+              Gap.h12,
+
+              TextFormField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email *',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+              ),
+              Gap.h12,
+
+              TextFormField(
+                controller: _phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Phone *',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
