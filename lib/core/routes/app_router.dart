@@ -10,15 +10,14 @@ final authGuardProvider = Provider<AuthGuardState>((ref) {
 
 class AuthGuardState {
   final bool isAuthenticated;
-
   final bool isInitialized;
-
   AuthGuardState({required this.isAuthenticated, required this.isInitialized});
 }
 
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: RouteEndpoint.dashboard,
+    refreshListenable: authRouterRefreshListenable,
 
     redirect: (context, state) {
       final container = ProviderScope.containerOf(context);
@@ -26,12 +25,10 @@ class AppRouter {
 
       final isLoginRoute = state.matchedLocation == RouteEndpoint.login;
 
-      // If not authenticated and trying to access proteced route
       if (!authGuard.isAuthenticated && !isLoginRoute) {
         return RouteEndpoint.login;
       }
 
-      // If authenticated and on loing page, redirect to dashboard
       if (authGuard.isAuthenticated && isLoginRoute) {
         return RouteEndpoint.dashboard;
       }

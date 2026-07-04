@@ -12,6 +12,9 @@ class AuthRemoteDataSource {
   Future<User> login(LoginRequest request) async {
     DPrint.log("Login Requests -> ${request.email}");
     try {
+      await _firebaseAuth.setPersistence(
+        request.rememberMe ? Persistence.LOCAL : Persistence.SESSION,
+      );
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
         email: request.email,
         password: request.password,

@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'core/routes/route_endpoint.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 import 'firebase_options.dart';
 import 'services/notification_service.dart';
 
@@ -21,7 +22,6 @@ void main() async {
   );
 
   Stripe.publishableKey = config;
-  // Stripe.publishableKey = stripePublishableKey;
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
 
@@ -31,30 +31,36 @@ void main() async {
 
   setPathUrlStrategy();
 
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+/// Waits for Firebase Auth to restore the persisted session before showing
+/// the router. This prevents Firestore providers from being created while
+/// unauthenticated, which would cause them to hang on permission errors.
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    // SystemChrome.setSystemUIOverlayStyle(
-    //   const SystemUiOverlayStyle(
-    //     statusBarColor: Colors.transparent,
-    //     statusBarIconBrightness: Brightness.dark,
-    //   ),
-    // );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isInitialized = ref.watch(
+      authProvider.select((s) => s.isInitialized),
+    );
 
-    return ProviderScope(
-      child: MaterialApp.router(
+    if (!isInitialized) {
+      return MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
         theme: AppTheme.light,
+        home: const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
 
-        routerConfig: AppRouter.router,
-      ),
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
+      theme: AppTheme.light,
+      routerConfig: AppRouter.router,
     );
   }
 }

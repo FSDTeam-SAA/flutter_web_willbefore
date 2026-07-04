@@ -96,6 +96,13 @@ class _WarehouseAddressSettingsState
   Widget build(BuildContext context) {
     final state = ref.watch(warehouseProvider);
 
+    // Fill form when data arrives asynchronously (e.g. on first direct navigation)
+    ref.listen<WarehouseState>(warehouseProvider, (prev, next) {
+      if (next.address != null && prev?.address == null) {
+        _fillForm(next.address!);
+      }
+    });
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Form(

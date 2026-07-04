@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
 import 'package:flutter_web_willbefore/features/auth/data/repos/auth_repository_impl.dart';
@@ -6,6 +7,13 @@ import 'package:flutter_web_willbefore/features/auth/domain/models/user_model.da
 import 'package:flutter_web_willbefore/features/auth/domain/repos/auth_repository.dart';
 import 'package:flutter_web_willbefore/features/auth/domain/requests/login_request.dart';
 import 'package:flutter_web_willbefore/features/auth/domain/usecases/login_use_case.dart';
+
+/// Notifies GoRouter whenever auth state changes so the redirect re-runs.
+final authRouterRefreshListenable = _AuthRefreshNotifier();
+
+class _AuthRefreshNotifier extends ChangeNotifier {
+  void notify() => notifyListeners();
+}
 
 class AuthState extends BaseState {
   final UserModel? user;
@@ -52,20 +60,31 @@ class AuthProvider extends StateNotifier<AuthState> {
   AuthProvider(this._loginUseCase, this._authRepository) : super(AuthState()) {
     _initializeAuthState();
 
-    /// [Listen] to auth state changes
+    /// [Listen] to auth state changes — also marks auth as initialized so the
+    /// router can react after Firebase restores a persisted web session.
     _authRepository.authStateChanges.listen((user) {
-      state = state.copyWith(user: user, isAuthenticated: user != null);
+      state = state.copyWith(
+        user: user,
+        isAuthenticated: user != null,
+        isInitialized: true,
+      );
+      authRouterRefreshListenable.notify();
     });
   }
 
   Future<void> _initializeAuthState() async {
     try {
+      // On web, currentUser may be null here even for a logged-in user because
+      // Firebase restores the persisted session asynchronously. Only set
+      // isInitialized when we actually have a user; otherwise let the
+      // authStateChanges listener handle it.
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
         final role = await _authRepository.getUserRole(currentUser.uid);
         if (role != 'admin') {
           await _authRepository.logout();
           state = state.copyWith(isAuthenticated: false, isInitialized: true);
+          authRouterRefreshListenable.notify();
           return;
         }
         final userModel = UserModel.fromFirebase(currentUser);
@@ -74,8 +93,7 @@ class AuthProvider extends StateNotifier<AuthState> {
           isAuthenticated: true,
           isInitialized: true,
         );
-      } else {
-        state = state.copyWith(isAuthenticated: false, isInitialized: true);
+        authRouterRefreshListenable.notify();
       }
     } catch (e) {
       state = state.copyWith(
@@ -83,6 +101,7 @@ class AuthProvider extends StateNotifier<AuthState> {
         isInitialized: true,
         errorMessage: e.toString(),
       );
+      authRouterRefreshListenable.notify();
     }
   }
 
