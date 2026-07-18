@@ -35,7 +35,7 @@ class _OverviewScreenState extends ConsumerState<OverviewScreen> {
   void initState() {
     super.initState();
     // Initialize Stripe
-    StripeService.init();
+    // StripeService.init();
     // Delay provider modifications until after the widget tree is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(productsProvider.notifier).fetchProducts();
