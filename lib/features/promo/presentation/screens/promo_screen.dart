@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
+import '../../domain/models/promo_model.dart';
 import '../providers/promos_provider.dart';
 
 class PromosScreen extends ConsumerStatefulWidget {
@@ -103,7 +104,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                         Expanded(
                           flex: 2,
                           child: Text(
-                            'Under of products',
+                            'Code',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.textAppBlack,
@@ -113,7 +114,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                         Expanded(
                           flex: 2,
                           child: Text(
-                            'Under of products',
+                            'Usage',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.textAppBlack,
@@ -121,7 +122,17 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                           ),
                         ),
                         SizedBox(
-                          width: 100,
+                          width: 90,
+                          child: Text(
+                            'Status',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textAppBlack,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 110,
                           child: Text(
                             'Action',
                             style: TextStyle(
@@ -293,31 +304,28 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                                   child: Text(
                                     promo.usageLimit > 0
                                         ? '${promo.usedCount}/${promo.usageLimit}'
-                                        : '${promo.usedCount}',
+                                        : '${promo.usedCount} used',
                                     style: const TextStyle(
                                       color: AppColors.textSecondaryColor,
                                     ),
                                   ),
                                 ),
 
+                                // Status badge
+                                SizedBox(
+                                  width: 90,
+                                  child: _StatusBadge(promo: promo),
+                                ),
+
                                 // Actions
                                 SizedBox(
-                                  width: 100,
+                                  width: 110,
                                   child: Wrap(
                                     spacing: 0,
                                     runSpacing: 0,
                                     children: [
                                       IconButton(
-                                        onPressed: () => context.go(
-                                          '${RouteEndpoint.promos}/view/${promo.id}',
-                                        ),
-                                        icon: const Icon(
-                                          Icons.visibility_outlined,
-                                          size: 18,
-                                          color: AppColors.textSecondaryColor,
-                                        ),
-                                      ),
-                                      IconButton(
+                                        tooltip: 'Edit',
                                         onPressed: () => context.go(
                                           '${RouteEndpoint.promos}/edit/${promo.id}',
                                         ),
@@ -328,6 +336,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                                         ),
                                       ),
                                       IconButton(
+                                        tooltip: 'Delete',
                                         onPressed: promosState.isDeleting
                                             ? null
                                             : () => _showDeleteDialog(
@@ -469,6 +478,48 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final PromoModel promo;
+  const _StatusBadge({required this.promo});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final String label;
+
+    if (promo.isExpired) {
+      color = Colors.grey;
+      label = 'Expired';
+    } else if (!promo.isActive) {
+      color = Colors.orange;
+      label = 'Inactive';
+    } else if (promo.isCurrentlyActive) {
+      color = Colors.green;
+      label = 'Active';
+    } else {
+      color = Colors.blue;
+      label = 'Scheduled';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(30),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(80)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }

@@ -88,19 +88,12 @@ class PromosProvider extends StateNotifier<PromosState> {
   void _listenToPromos() {
     _getPromosUseCase.stream().listen(
       (promos) {
-        // activePromos for CUSTOMER (must be currently active)
         final activePromos = promos
             .where((promo) => promo.isCurrentlyActive)
             .toList();
 
-        // promos for ADMIN (can include future promos, just not expired ones)
-        final selectablePromosForAdmin = promos
-            .where((promo) => promo.isActive && !promo.isExpired)
-            .toList();
-
         state = state.copyWith(
-          promos:
-              selectablePromosForAdmin, // Use this for dropdowns in admin screens
+          promos: promos, // admin sees all promos
           activePromos: activePromos,
           isLoading: false,
         );

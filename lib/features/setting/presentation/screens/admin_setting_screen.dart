@@ -9,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'warehouse_address_settings.dart';
+import 'shipping_settings_screen.dart';
 
 class AdminSettingScreen extends ConsumerStatefulWidget {
   const AdminSettingScreen({super.key});
@@ -162,6 +163,10 @@ class _AdminSettingScreenState extends ConsumerState<AdminSettingScreen> {
             //   ),
             // ),
             WarehouseAddressSettings(),
+            Gap.h24,
+            const Divider(),
+            Gap.h8,
+            const ShippingSettingsWidget(),
             Gap.h24,
 
             // Logout button
