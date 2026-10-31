@@ -137,11 +137,22 @@ class AppRouter {
                 name: 'add-promo',
                 builder: (context, state) => const AddPromoScreen(),
               ),
-              // GoRoute(
-              //   path: 'view',
-              //   name: 'add-promo',
-              //   builder: (context, state) => const AddPromoScreen(),
-              // ),
+              GoRoute(
+                path: 'edit/:id',
+                name: 'edit-promo',
+                builder: (context, state) {
+                  final promoId = state.pathParameters['id']!;
+                  return AddPromoScreen(promoId: promoId);
+                },
+              ),
+              GoRoute(
+                path: 'view/:id',
+                name: 'view-promo',
+                builder: (context, state) {
+                  final promoId = state.pathParameters['id']!;
+                  return PromoViewScreen(promoId: promoId);
+                },
+              ),
             ],
           ),
           GoRoute(

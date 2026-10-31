@@ -16,6 +16,10 @@ exports.deleteAppUser = manageUsers.deleteAppUser;
 
 exports.sendProductNotification =
   require("./controllers/on_new_product").sendProductNotification;
+exports.sendPromoNotification =
+  require("./controllers/on_new_promo").sendPromoNotification;
+exports.onOrderPromoUsed =
+  require("./controllers/promo_usage").onOrderPromoUsed;
 exports.sendSubscriptionNotification =
   require("./controllers/subscription").sendSubscriptionNotification;
 

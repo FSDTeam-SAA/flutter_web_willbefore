@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
+import '../../domain/models/promo_model.dart';
 import '../providers/promos_provider.dart';
+import '../providers/send_promo_notification.dart';
 
 class PromosScreen extends ConsumerStatefulWidget {
   const PromosScreen({super.key});
@@ -20,8 +22,12 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
   final ScrollController _horizontalController = ScrollController();
 
   /// Below this width the table scrolls sideways instead of squeezing.
-  static const double _minTableWidth = 700;
+  static const double _minTableWidth = 800;
+  static const double _actionColumnWidth = 200;
   final TextEditingController _searchController = TextEditingController();
+
+  /// Stops a second send of a promo while one is confirming or in progress.
+  final Set<String> _sendingPromoIds = {};
 
   @override
   void initState() {
@@ -55,35 +61,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Promo',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textAppBlack,
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => context.go('${RouteEndpoint.promos}/add'),
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text(
-                  'Add Promo',
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryLaurel,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildPageHeader(),
 
           const SizedBox(height: 16),
 
@@ -117,6 +95,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
           // Promos Table
           Expanded(
             child: Container(
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -138,61 +117,7 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                       width: max(constraints.maxWidth, _minTableWidth),
                       child: Column(
                         children: [
-                          // Table Header
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                            ),
-                            child: const Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(
-                                    'Promo Name',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textAppBlack,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    'Code',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textAppBlack,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    'Usage',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textAppBlack,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 150,
-                                  child: Text(
-                                    'Action',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textAppBlack,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          _buildTableHeader(),
 
                           // Table Body
                           if (promosState.isLoadingAdmin)
@@ -245,190 +170,10 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
                                     );
                                   }
 
-                                  final promo = promos[index];
-                                  final isLast = index == promos.length - 1;
-
-                                  return Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: isLast
-                                              ? Colors.transparent
-                                              : AppColors.borderColor,
-                                        ),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // Promo Name with Image
-                                        Expanded(
-                                          flex: 3,
-                                          child: Row(
-                                            children: [
-                                              // Promo Image
-                                              Container(
-                                                width: 80,
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  color: AppColors.bgColor,
-                                                ),
-                                                child: promo.imageUrl != null
-                                                    ? ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                        child: Image.network(
-                                                          promo.imageUrl!,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (
-                                                                context,
-                                                                error,
-                                                                stackTrace,
-                                                              ) {
-                                                                return const Icon(
-                                                                  Icons
-                                                                      .local_offer,
-                                                                  color: AppColors
-                                                                      .primaryLaurel,
-                                                                  size: 24,
-                                                                );
-                                                              },
-                                                        ),
-                                                      )
-                                                    : const Icon(
-                                                        Icons.local_offer,
-                                                        color: AppColors
-                                                            .primaryLaurel,
-                                                        size: 24,
-                                                      ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              // Promo Details
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      promo.title,
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color: AppColors
-                                                            .textAppBlack,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      'Up to ${promo.discountPercentage.toInt()}% off',
-                                                      style: const TextStyle(
-                                                        color: AppColors
-                                                            .textSecondaryColor,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        // Code
-                                        Expanded(
-                                          flex: 2,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.bgColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              border: Border.all(
-                                                color: AppColors.borderColor,
-                                              ),
-                                            ),
-                                            child: Text(
-                                              promo.code,
-                                              style: const TextStyle(
-                                                fontFamily: 'monospace',
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.textAppBlack,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-
-                                        // Usage Count
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            promo.usageLimit > 0
-                                                ? '${promo.usedCount}/${promo.usageLimit}'
-                                                : '${promo.usedCount}',
-                                            style: const TextStyle(
-                                              color:
-                                                  AppColors.textSecondaryColor,
-                                            ),
-                                          ),
-                                        ),
-
-                                        // Actions
-                                        SizedBox(
-                                          width: 150,
-                                          child: Wrap(
-                                            spacing: 0,
-                                            runSpacing: 0,
-                                            children: [
-                                              IconButton(
-                                                onPressed: () => context.go(
-                                                  '${RouteEndpoint.promos}/view/${promo.id}',
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.visibility_outlined,
-                                                  size: 18,
-                                                  color: AppColors
-                                                      .textSecondaryColor,
-                                                ),
-                                              ),
-                                              IconButton(
-                                                onPressed: () => context.go(
-                                                  '${RouteEndpoint.promos}/edit/${promo.id}',
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.edit_outlined,
-                                                  size: 18,
-                                                  color:
-                                                      AppColors.primaryLaurel,
-                                                ),
-                                              ),
-                                              IconButton(
-                                                onPressed:
-                                                    promosState.isDeleting
-                                                    ? null
-                                                    : () => _showDeleteDialog(
-                                                        context,
-                                                        promo.id,
-                                                      ),
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                  size: 18,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  return _buildPromoRow(
+                                    promos[index],
+                                    isLast: index == promos.length - 1,
+                                    isDeleting: promosState.isDeleting,
                                   );
                                 },
                               ),
@@ -446,10 +191,226 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, String promoId) {
+  Widget _buildPageHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Promo',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textAppBlack,
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => context.go('${RouteEndpoint.promos}/add'),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text(
+              'Add Promo',
+              style: TextStyle(color: Colors.white),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLaurel,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      color: Colors.grey[200],
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: _buildHeaderCell('Promo Name')),
+          Expanded(flex: 2, child: _buildHeaderCell('Code')),
+          Expanded(flex: 2, child: _buildHeaderCell('Products')),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: _buildHeaderCell('Action'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderCell(String label) {
+    return Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        color: AppColors.textAppBlack,
+      ),
+    );
+  }
+
+  Widget _buildPromoRow(
+    PromoModel promo, {
+    required bool isLast,
+    required bool isDeleting,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: isLast ? Colors.transparent : AppColors.borderColor,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 3, child: _buildPromoName(promo)),
+          Expanded(
+            flex: 2,
+            child: Text(
+              promo.code,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textSecondaryColor),
+            ),
+          ),
+          Expanded(flex: 2, child: _PromoProductCount(promoId: promo.id)),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: _buildActions(promo, isDeleting: isDeleting),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoName(PromoModel promo) {
+    return Row(
+      children: [
+        Container(
+          width: 108,
+          height: 46,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            color: AppColors.bgColor,
+          ),
+          child: promo.imageUrl != null
+              ? Image.network(
+                  promo.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildImageFallback(),
+                )
+              : _buildImageFallback(),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                promo.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textAppBlack,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                promo.discountLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondaryColor,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageFallback() {
+    return const Icon(
+      Icons.local_offer,
+      color: AppColors.primaryLaurel,
+      size: 24,
+    );
+  }
+
+  Widget _buildActions(PromoModel promo, {required bool isDeleting}) {
+    final canNotify =
+        promo.isCurrentlyActive && !_sendingPromoIds.contains(promo.id);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          tooltip: 'View',
+          onPressed: () =>
+              context.go('${RouteEndpoint.promos}/view/${promo.id}'),
+          icon: const Icon(
+            Icons.visibility_outlined,
+            size: 18,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Edit',
+          onPressed: () =>
+              context.go('${RouteEndpoint.promos}/edit/${promo.id}'),
+          icon: const Icon(
+            Icons.edit_outlined,
+            size: 18,
+            color: AppColors.textAppBlack,
+          ),
+        ),
+        IconButton(
+          tooltip: promo.isCurrentlyActive
+              ? 'Notify all users'
+              : 'Only active promos can be sent',
+          onPressed: canNotify ? () => _notifyUsers(promo) : null,
+          icon: Icon(
+            Icons.notifications_active_outlined,
+            size: 18,
+            color: canNotify
+                ? AppColors.primaryLaurel
+                : AppColors.textSecondaryHintColor,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Delete',
+          onPressed: isDeleting ? null : () => _showDeleteDialog(promo.id),
+          icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _notifyUsers(PromoModel promo) async {
+    setState(() => _sendingPromoIds.add(promo.id));
+    await confirmAndSendPromoNotification(context, promo);
+    if (mounted) setState(() => _sendingPromoIds.remove(promo.id));
+  }
+
+  void _showDeleteDialog(String promoId) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Delete Promo'),
           content: const Text(
@@ -457,23 +418,25 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
                 final success = await ref
                     .read(promosProvider.notifier)
                     .deletePromo(promoId);
-                if (success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Promo deleted successfully!'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                final message = success
+                    ? 'Promo deleted successfully!'
+                    : ref
+                          .read(promosProvider)
+                          .errorMessage
+                          .replaceFirst('Exception: ', '');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(message), backgroundColor: Colors.red),
+                );
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text(
@@ -484,6 +447,23 @@ class _PromosScreenState extends ConsumerState<PromosScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _PromoProductCount extends ConsumerWidget {
+  final String promoId;
+
+  const _PromoProductCount({required this.promoId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = ref.watch(promoProductCountProvider(promoId));
+
+    return Text(
+      count.maybeWhen(data: (value) => '$value', orElse: () => '-'),
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: AppColors.textSecondaryColor),
     );
   }
 }

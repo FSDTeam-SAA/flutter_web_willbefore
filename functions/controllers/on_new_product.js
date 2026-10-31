@@ -1,7 +1,10 @@
 const {onCall} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const {assertStaff} = require("./require_staff");
 
 exports.sendProductNotification = onCall(async (request) => {
+  await assertStaff(request);
+
   const product = request.data;
 
   if (!product || !product.name) {

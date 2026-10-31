@@ -5,6 +5,7 @@ enum NotificationType {
   orderShipped,
   orderRefunded,
   chatReply,
+  promo,
   general,
 }
 
@@ -78,6 +79,8 @@ class NotificationModel {
       case 'chatReply':
       case 'chat_reply':
         return NotificationType.chatReply;
+      case 'promo':
+        return NotificationType.promo;
       default:
         return NotificationType.general;
     }

@@ -98,6 +98,17 @@ class PromoModel {
     return DateTime.now().isAfter(endDate);
   }
 
+  /// Short summary for lists. The fixed amount comes first because that is
+  /// what the customer app applies when a promo has both.
+  String get discountLabel {
+    final amount = discountAmount ?? 0;
+    if (amount > 0) return '\$${amount.toStringAsFixed(2)} off';
+    if (discountPercentage > 0) {
+      return 'Up to ${discountPercentage.toInt()}% off';
+    }
+    return 'No discount';
+  }
+
   PromoModel copyWith({
     String? id,
     String? title,

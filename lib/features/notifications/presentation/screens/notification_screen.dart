@@ -385,6 +385,8 @@ class _NotificationTile extends ConsumerWidget {
         return Icons.settings_backup_restore;
       case NotificationType.chatReply:
         return Icons.chat_bubble_outline;
+      case NotificationType.promo:
+        return Icons.local_offer_outlined;
       case NotificationType.general:
       default:
         return Icons.notifications;
@@ -401,6 +403,8 @@ class _NotificationTile extends ConsumerWidget {
         return Colors.orange;
       case NotificationType.chatReply:
         return Colors.purple;
+      case NotificationType.promo:
+        return Colors.pink;
       case NotificationType.general:
       default:
         return AppColors.primaryLaurel;

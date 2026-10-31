@@ -8,11 +8,17 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/route_endpoint.dart';
 import '../../../../core/theme/app_input_decoration.dart';
+import '../../domain/models/promo_model.dart';
 import '../../domain/requests/create_promo_request.dart';
+import '../../domain/requests/update_promo_request.dart';
 import '../providers/promos_provider.dart';
+import '../widgets/promo_not_found.dart';
 
+/// Creates a promo, or edits an existing one when [promoId] is given.
 class AddPromoScreen extends ConsumerStatefulWidget {
-  const AddPromoScreen({super.key});
+  final String? promoId;
+
+  const AddPromoScreen({super.key, this.promoId});
 
   @override
   ConsumerState<AddPromoScreen> createState() => _AddPromoScreenState();
@@ -35,6 +41,7 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
   bool _isActive = true;
+  PromoModel? _editingPromo;
 
   @override
   void dispose() {
@@ -50,12 +57,50 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
     super.dispose();
   }
 
+  /// Fills the form once, so a provider rebuild can't overwrite admin edits.
+  void _prefillForm(PromoModel promo) {
+    if (_editingPromo != null) return;
+    _editingPromo = promo;
+
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    _titleController.text = promo.title;
+    _codeController.text = promo.code;
+    _descriptionController.text = promo.description;
+    _discountPercentageController.text = _formatNumber(
+      promo.discountPercentage,
+    );
+    _discountAmountController.text = promo.discountAmount != null
+        ? _formatNumber(promo.discountAmount!)
+        : '';
+    _minimumOrderController.text = promo.minimumOrderAmount != null
+        ? _formatNumber(promo.minimumOrderAmount!)
+        : '';
+    _usageLimitController.text = promo.usageLimit.toString();
+    _startDateController.text = dateFormat.format(promo.startDate);
+    _endDateController.text = dateFormat.format(promo.endDate);
+    _startDate = promo.startDate;
+    _endDate = promo.endDate;
+    _isActive = promo.isActive;
+  }
+
+  String _formatNumber(double value) {
+    return value == value.truncateToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final now = DateTime.now();
+    final initialDate = (isStartDate ? _startDate : _endDate) ?? now;
+    final latestDate = now.add(const Duration(days: 365));
+
+    // An existing promo's dates can fall outside the usual range, and the
+    // picker asserts that initialDate is within it.
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: initialDate.isBefore(now) ? initialDate : now,
+      lastDate: initialDate.isAfter(latestDate) ? initialDate : latestDate,
     );
 
     if (picked != null) {
@@ -100,35 +145,69 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final request = CreatePromoRequest(
-      title: _titleController.text.trim(),
-      code: _codeController.text.trim().toUpperCase(),
-      description: _descriptionController.text.trim(),
-      discountPercentage:
-          double.tryParse(_discountPercentageController.text) ?? 0,
-      discountAmount: _discountAmountController.text.isNotEmpty
-          ? double.tryParse(_discountAmountController.text)
-          : null,
-      minimumOrderAmount: _minimumOrderController.text.isNotEmpty
-          ? double.tryParse(_minimumOrderController.text)
-          : null,
-      startDate: _startDate!,
-      endDate: _endDate!,
-      imageBytes: _selectedImageBytes,
-      imageName: _selectedImageName,
-      isActive: _isActive,
-      usageLimit: int.tryParse(_usageLimitController.text) ?? 0,
-    );
+    final title = _titleController.text.trim();
+    final code = _codeController.text.trim().toUpperCase();
+    final description = _descriptionController.text.trim();
+    final discountPercentage =
+        double.tryParse(_discountPercentageController.text) ?? 0;
+    final discountAmount = _discountAmountController.text.isNotEmpty
+        ? double.tryParse(_discountAmountController.text)
+        : null;
+    final minimumOrderAmount = _minimumOrderController.text.isNotEmpty
+        ? double.tryParse(_minimumOrderController.text)
+        : null;
+    final usageLimit = int.tryParse(_usageLimitController.text) ?? 0;
 
-    final success = await ref
-        .read(promosProvider.notifier)
-        .createPromo(request);
+    final notifier = ref.read(promosProvider.notifier);
+    final editingPromo = _editingPromo;
+
+    final success = editingPromo == null
+        ? await notifier.createPromo(
+            CreatePromoRequest(
+              title: title,
+              code: code,
+              description: description,
+              discountPercentage: discountPercentage,
+              discountAmount: discountAmount,
+              minimumOrderAmount: minimumOrderAmount,
+              startDate: _startDate!,
+              endDate: _endDate!,
+              imageBytes: _selectedImageBytes,
+              imageName: _selectedImageName,
+              isActive: _isActive,
+              usageLimit: usageLimit,
+            ),
+          )
+        : await notifier.updatePromo(
+            UpdatePromoRequest(
+              id: editingPromo.id,
+              title: title,
+              code: code,
+              description: description,
+              discountPercentage: discountPercentage,
+              discountAmount: discountAmount,
+              minimumOrderAmount: minimumOrderAmount,
+              startDate: _startDate!,
+              endDate: _endDate!,
+              imageBytes: _selectedImageBytes,
+              imageName: _selectedImageName,
+              existingImageUrl: editingPromo.imageUrl,
+              isActive: _isActive,
+              usageLimit: usageLimit,
+              applicableProductIds: editingPromo.applicableProductIds,
+              applicableCategoryIds: editingPromo.applicableCategoryIds,
+            ),
+          );
 
     if (success && mounted) {
       context.go(RouteEndpoint.promos);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Promo created successfully!'),
+        SnackBar(
+          content: Text(
+            editingPromo == null
+                ? 'Promo created successfully!'
+                : 'Promo updated successfully!',
+          ),
           backgroundColor: AppColors.primaryLaurel,
         ),
       );
@@ -142,6 +221,24 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final promoId = widget.promoId;
+    if (promoId == null) return _buildForm();
+
+    return ref
+        .watch(promoByIdProvider(promoId))
+        .when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryLaurel),
+          ),
+          error: (_, _) => const PromoNotFound(),
+          data: (promo) {
+            _prefillForm(promo);
+            return _buildForm();
+          },
+        );
+  }
+
+  Widget _buildForm() {
     final promosState = ref.watch(promosProvider);
 
     return LayoutBuilder(
@@ -163,7 +260,9 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
           _buildSettingsSection(),
           const SizedBox(height: 32),
         ];
-        final buttons = _buildActionButtons(promosState.isCreating);
+        final buttons = _buildActionButtons(
+          promosState.isCreating || promosState.isUpdating,
+        );
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(narrow ? 12 : 24),
@@ -480,6 +579,8 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
   }
 
   Widget _buildImageSection(bool narrow) {
+    final existingImageUrl = _editingPromo?.imageUrl;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -541,6 +642,21 @@ class _AddPromoScreenState extends ConsumerState<AddPromoScreen> {
                         ),
                       ),
                     ],
+                  )
+                : existingImageUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      existingImageUrl,
+                      width: double.infinity,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.local_offer,
+                        color: AppColors.primaryLaurel,
+                        size: 64,
+                      ),
+                    ),
                   )
                 : const Center(
                     child: Column(

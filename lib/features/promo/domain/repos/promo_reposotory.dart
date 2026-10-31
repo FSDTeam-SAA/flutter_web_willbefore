@@ -17,4 +17,5 @@ abstract class PromosRepository {
   Stream<List<PromoModel>> getPromosStream();
   Future<List<PromoModel>> getActivePromos();
   Future<void> incrementPromoUsage(String id);
+  Future<int> countProductsUsingPromo(String id);
 }

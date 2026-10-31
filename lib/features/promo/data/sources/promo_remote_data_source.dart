@@ -237,6 +237,22 @@ class PromosRemoteDataSource {
     }
   }
 
+  /// Counts hidden products too, unlike the product feature's
+  /// getProductsByPromo, which only returns active ones.
+  Future<int> countProductsUsingPromo(String id) async {
+    try {
+      final snapshot = await _firestore
+          .collection('products')
+          .where('promoId', isEqualTo: id)
+          .count()
+          .get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      DPrint.log("Error counting products using promo: $e");
+      throw Exception("Failed to check products using promo: $e");
+    }
+  }
+
   Future<String> _uploadImage(Uint8List imageBytes, String fileName) async {
     try {
       final ref = _storage.ref().child('$_storageFolder/$fileName');

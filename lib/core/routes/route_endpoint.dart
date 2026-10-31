@@ -17,6 +17,7 @@ import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_view_screen.dart';
 import '../../features/promo/presentation/screens/add_promo_screen.dart';
 import '../../features/promo/presentation/screens/promo_screen.dart';
+import '../../features/promo/presentation/screens/promo_view_screen.dart';
 import '../../features/setting/presentation/screens/admin_setting_screen.dart';
 import '../../features/userProfile/presentation/screens/user_profile_screen.dart';
 import '../../features/userProfile/presentation/screens/user_detail_screen.dart';

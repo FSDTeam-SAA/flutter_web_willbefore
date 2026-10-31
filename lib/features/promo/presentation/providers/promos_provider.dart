@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_web_willbefore/core/base/base_state.dart';
 import '../../data/repos/promos_repository_impl.dart';
@@ -98,6 +99,20 @@ final promosProvider = StateNotifierProvider<PromosProvider, PromosState>((
     deletePromoUseCase,
   );
 });
+
+/// Fetched directly because `adminPromos` is paginated and `promos` excludes
+/// expired ones, so neither is guaranteed to contain a given id.
+final promoByIdProvider = FutureProvider.autoDispose.family<PromoModel, String>(
+  (ref, id) {
+    final repository = ref.watch(promosRepositoryProvider);
+    return GetPromosUseCase(repository).getById(id);
+  },
+);
+
+final promoProductCountProvider = FutureProvider.autoDispose
+    .family<int, String>((ref, id) {
+      return ref.watch(promosRepositoryProvider).countProductsUsingPromo(id);
+    });
 
 class PromosProvider extends StateNotifier<PromosState> {
   final GetPromosUseCase _getPromosUseCase;

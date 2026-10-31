@@ -66,6 +66,11 @@ class PromosRepositoryImpl implements PromosRepository {
   Future<void> incrementPromoUsage(String id) async {
     return await remoteDataSource.incrementPromoUsage(id);
   }
+
+  @override
+  Future<int> countProductsUsingPromo(String id) async {
+    return await remoteDataSource.countProductsUsingPromo(id);
+  }
 }
 
 final promosRepositoryProvider = Provider<PromosRepository>((ref) {

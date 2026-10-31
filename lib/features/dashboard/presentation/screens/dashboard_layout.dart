@@ -48,6 +48,8 @@ class _DashboardLayoutState extends State<DashboardLayout> {
     if (location.startsWith('/products')) return 'Product List';
     if (location.startsWith('/orders')) return 'Orders';
     if (location.startsWith('/promos/add')) return 'Add Promo';
+    if (location.startsWith('/promos/edit')) return 'Edit Promo';
+    if (location.startsWith('/promos/view')) return 'Promo Details';
     if (location.startsWith('/promos')) return 'Promos';
     if (location.startsWith('/profile')) return 'User Profile';
     if (location.startsWith('/settings')) return 'Settings';
@@ -74,6 +76,12 @@ class _DashboardLayoutState extends State<DashboardLayout> {
     if (location.startsWith('/orders')) return ['Dashboard', 'Orders'];
     if (location.startsWith('/promos/add')) {
       return ['Dashboard', 'Promo List', 'Add Promo'];
+    }
+    if (location.startsWith('/promos/edit')) {
+      return ['Dashboard', 'Promo List', 'Edit Promo'];
+    }
+    if (location.startsWith('/promos/view')) {
+      return ['Dashboard', 'Promo List', 'Promo Details'];
     }
     if (location.startsWith('/promos')) return ['Dashboard', 'Promo List'];
     if (location.startsWith('/profile')) return ['Dashboard', 'User Profile'];

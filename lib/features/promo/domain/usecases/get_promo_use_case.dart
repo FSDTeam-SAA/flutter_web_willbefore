@@ -32,6 +32,10 @@ class GetPromosUseCase {
     return await repository.getActivePromos();
   }
 
+  Future<PromoModel> getById(String id) async {
+    return await repository.getPromoById(id);
+  }
+
   Future<PromoModel?> getByCode(String code) async {
     return await repository.getPromoByCode(code);
   }

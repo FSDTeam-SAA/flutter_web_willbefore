@@ -37,6 +37,19 @@
   <title>Smiles Treats</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Start downloading startup files now instead of after main.dart.js runs.
+       Fonts: fetched by Flutter with fetch(). Firebase JS: injected by
+       firebase_core_web as classic scripts; the version must match
+       SDK_VERSION of the firebase_core_web in pubspec.lock (a mismatch only
+       wastes bandwidth, it does not break the app). -->
+  <link rel="preload" as="fetch" crossorigin href="assets/assets/fonts/NotoSansKR-Regular.ttf">
+  <link rel="preload" as="fetch" crossorigin href="assets/assets/fonts/NotoSansKR-Medium.ttf">
+  <link rel="preload" as="fetch" crossorigin href="assets/assets/fonts/NotoSansKR-SemiBold.ttf">
+  <link rel="preload" as="fetch" crossorigin href="assets/assets/fonts/NotoSansKR-Bold.ttf">
+  <link rel="preload" as="script" crossorigin href="https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js">
+  <link rel="preload" as="script" crossorigin href="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js">
+  <link rel="preload" as="script" crossorigin href="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-pipelines.js">
+
   <style>
     html, body { margin: 0; height: 100%; background: #fff; }
     #splash {
